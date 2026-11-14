@@ -250,6 +250,7 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder
     private var aboutSection: some View {
         Section {
             HStack {
