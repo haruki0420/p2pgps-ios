@@ -1,0 +1,43 @@
+# --- SwiftPM / xtool build products -----------------------------------------
+.build/
+.swiftpm/
+.xtool/
+xtool/
+.bsp/
+DerivedData/
+Packages/
+
+# XcodeGen generates this from project.yml; never commit it.
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+
+# --- Vendored binary ---------------------------------------------------------
+# 92.6 MB, arm64 iOS only. Fetch with scripts/fetch-vendor.sh and verify the
+# SHA-256; never commit it (see NOTICE / docs/architecture.md).
+Vendor/idevice/libidevice_ffi.a
+Vendor/idevice/*.a.tmp
+
+# --- Secrets / signing material ---------------------------------------------
+# Never commit pairing files, certificates, provisioning profiles or Apple IDs.
+*.mobiledevicepairing
+*.mobiledevicepair
+pairingFile.plist
+*.p12
+*.p8
+*.mobileprovision
+*.entitlements.local
+Secrets/
+.env
+
+# --- Build outputs -----------------------------------------------------------
+*.ipa
+*.app/
+*.dSYM/
+build/
+
+# --- OS / editor -------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

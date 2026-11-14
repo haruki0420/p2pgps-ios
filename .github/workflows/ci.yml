@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & test (macOS)
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain versions
+        run: |
+          swift --version
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+
+      # (a) Protocol / Core unit tests. These targets are Foundation-only, so
+      #     they run natively on the macOS runner. `swift test` also compiles
+      #     the rest of the package graph, which is why every target is written
+      #     to compile on macOS (UI code is behind `#if canImport(UIKit)`).
+      - name: Unit tests (macOS)
+        run: swift test --parallel
+
+      # (b) Fetch the vendored arm64 iOS static library (not in git).
+      - name: Fetch vendored idevice library
+        run: bash scripts/fetch-vendor.sh
+
+      # (c) SwiftPM cross-build for iOS: compiles every module (including the
+      #     SwiftUI app and the TLocation-derived injection engine) against the
+      #     real iOS SDK. This is the same build xtool performs on Linux/WSL.
+      - name: Cross-build for iOS (SwiftPM)
+        run: |
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          swift build --triple arm64-apple-ios17.0 --sdk "$SDK"
+
+      # (d) XcodeGen + xcodebuild: a genuine Xcode compile and *link* of the
+      #     app, including the static idevice library and Info.plist.
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build app with xcodebuild (link check)
+        run: |
+          xcodebuild \
+            -project P2PGPS.xcodeproj \
+            -scheme P2PGPSApp \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            .build/**/*.log
+            build/
+          if-no-files-found: ignore
+          retention-days: 7
