@@ -133,7 +133,16 @@ let package = Package(
         .testTarget(
             name: "P2PGPSProtocolTests",
             dependencies: ["P2PGPSProtocol", "P2PGPSCore"],
-            swiftSettings: [.swiftLanguageMode(.v6)]
+            // `Vectors/` is a manual mirror of `p2pgps-protocol/tests/vectors/`
+            // (see Vectors/README.md). The JSON is read at test time via
+            // `Bundle.module`, so the shared vectors are actually exercised
+            // instead of being re-typed in Swift.
+            resources: [.copy("Vectors")],
+            // Tests stay in Swift 5 language mode: XCTest and SwiftPM's
+            // generated `Bundle.module` accessor are not designed around strict
+            // concurrency, and the production modules under test keep their own
+            // modes (Protocol/Core are Swift 6).
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
     ]
 )

@@ -41,6 +41,16 @@ enum P2PColor {
     static let liveFill = Color(p2pLight: 0xB85C38, p2pDark: 0xC96A42)
     static let amber = Color(p2pLight: 0x8A5A12, p2pDark: 0xE0B25C)
     static let danger = Color(p2pLight: 0xA32E24, p2pDark: 0xE0705F)
+
+    /// Foreground on a `pine` fill (primary actions). `paper` gives
+    /// 5.75:1 (Light) / 8.17:1 (Dark), both above WCAG AA 4.5:1.
+    static let onPrimary = P2PColor.paper
+
+    /// Foreground on a `liveFill` fill (injection toggle ON). `paper` is only
+    /// 4.11:1 on the Light `liveFill`, so Light uses white (4.54:1) and Dark
+    /// keeps `paper` (4.74:1). Never hard-code `Color.white` on `pine` — the
+    /// Dark `pine` is light and white would drop to 2.17:1.
+    static let onLiveFill = Color(p2pLight: 0xFFFFFF, p2pDark: 0x0F1A1E)
 }
 
 extension Color {
@@ -94,15 +104,6 @@ enum P2PSpacing {
     static let signalBarHeight: CGFloat = 10
     static let signalBarSpacing: CGFloat = 2
     static let ledDiameter: CGFloat = 8
-}
-
-// MARK: - Motion
-
-/// Motion constants (DESIGN.md "Motion"). All are disabled under Reduce Motion.
-enum P2PMotion {
-    static let coordinateCrossfade: Double = 0.12
-    static let ledPulse: Double = 1.2
-    static let toggleBorder: Double = 0.2
 }
 
 // MARK: - Formatters

@@ -505,13 +505,54 @@ final class ControlCommandTests: XCTestCase {
         }
     }
 
+    /// Spec §5.1 (v1.0.1): 0 → 1000, 1–99 → 100, 100–60000 → unchanged,
+    /// 60001–65535 → 60000. This is the boundary-clamp decision shared by all
+    /// three implementations.
     func testIntervalNormalisation() {
+        XCTAssertEqual(ControlCommand.normalizedInterval(0), 1_000)
+        XCTAssertEqual(ControlCommand.normalizedInterval(1), 100)
+        XCTAssertEqual(ControlCommand.normalizedInterval(50), 100)
+        XCTAssertEqual(ControlCommand.normalizedInterval(99), 100)
+        XCTAssertEqual(ControlCommand.normalizedInterval(100), 100)
+        XCTAssertEqual(ControlCommand.normalizedInterval(1_000), 1_000)
+        XCTAssertEqual(ControlCommand.normalizedInterval(60_000), 60_000)
+        XCTAssertEqual(ControlCommand.normalizedInterval(60_001), 60_000)
+        XCTAssertEqual(ControlCommand.normalizedInterval(65_000), 60_000)
+        XCTAssertEqual(ControlCommand.normalizedInterval(65_535), 60_000)
+
         XCTAssertEqual(ControlCommand.start(intervalMilliseconds: 0).resolvedIntervalMilliseconds, 1_000)
         XCTAssertEqual(ControlCommand.start(intervalMilliseconds: 50).resolvedIntervalMilliseconds, 100)
         XCTAssertEqual(ControlCommand.start(intervalMilliseconds: 100).resolvedIntervalMilliseconds, 100)
         XCTAssertEqual(ControlCommand.setInterval(intervalMilliseconds: 60_000).resolvedIntervalMilliseconds, 60_000)
         XCTAssertEqual(ControlCommand.setInterval(intervalMilliseconds: 65_000).resolvedIntervalMilliseconds, 60_000)
         XCTAssertNil(ControlCommand.stop.resolvedIntervalMilliseconds)
+    }
+
+    /// Spec §5.1: the Control characteristic carries the **raw** value; the
+    /// sender normalises when it applies it. `encoded()` must not clamp.
+    func testRawIntervalIsEncodedVerbatim() {
+        XCTAssertEqual(Array(ControlCommand.start(intervalMilliseconds: 0).encoded()), [0x01, 0x00, 0x00])
+        XCTAssertEqual(Array(ControlCommand.start(intervalMilliseconds: 50).encoded()), [0x01, 0x32, 0x00])
+        XCTAssertEqual(Array(ControlCommand.start(intervalMilliseconds: 60_001).encoded()), [0x01, 0x61, 0xEA])
+        XCTAssertEqual(Array(ControlCommand.start(intervalMilliseconds: 65_535).encoded()), [0x01, 0xFF, 0xFF])
+        XCTAssertEqual(Array(ControlCommand.setInterval(intervalMilliseconds: 0).encoded()), [0x03, 0x00, 0x00])
+        XCTAssertEqual(Array(ControlCommand.setInterval(intervalMilliseconds: 60_001).encoded()), [0x03, 0x61, 0xEA])
+    }
+
+    /// Decoding preserves the raw value; the normalised value is only applied
+    /// through `resolvedIntervalMilliseconds` (spec §5.1).
+    func testDecodePreservesRawIntervalAndNormalisesOnApply() throws {
+        let startZero = try ControlCommand.decode(Data([0x01, 0x00, 0x00]))
+        XCTAssertEqual(startZero, .start(intervalMilliseconds: 0))
+        XCTAssertEqual(startZero.resolvedIntervalMilliseconds, 1_000)
+
+        let startFifty = try ControlCommand.decode(Data([0x01, 0x32, 0x00]))
+        XCTAssertEqual(startFifty, .start(intervalMilliseconds: 50))
+        XCTAssertEqual(startFifty.resolvedIntervalMilliseconds, 100)
+
+        let tooLarge = try ControlCommand.decode(Data([0x03, 0x61, 0xEA]))
+        XCTAssertEqual(tooLarge, .setInterval(intervalMilliseconds: 60_001))
+        XCTAssertEqual(tooLarge.resolvedIntervalMilliseconds, 60_000)
     }
 }
 

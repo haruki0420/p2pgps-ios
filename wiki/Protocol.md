@@ -62,6 +62,11 @@ P2P GPS BLE プロトコル v1 の実装メモです。仕様の正本は `p2pgp
 
 `swift test` で仕様 §10 のベクタを検証します（東京駅・南極・Null Island・範囲外・未知バージョン・sequence 巻き戻り・Extended・Control 各 opcode・Status）。
 
+- `Tests/P2PGPSProtocolTests/ProtocolVectorTests.swift`: 代表ベクタを Swift で直接検証。
+- `Tests/P2PGPSProtocolTests/Vectors/*.json`: `p2pgps-protocol` の共有ベクタの手動ミラーを `ProtocolVectorJSONTests.swift` が読み、全ベクタで encode / decode / validate を検証。
+
+Control の `interval_ms` は仕様 §5.1 の境界クランプ方式です（`0`→1000、`1`–`99`→100、`100`–`60000`→そのまま、`60001`–`65535`→60000）。`hex` は生値、`normalized_interval_ms` は送信側が適用する値です。
+
 東京駅の例:
 
 ```

@@ -30,7 +30,7 @@ UUID は文字列で保持し、CoreBluetooth への変換は `P2PGPSBLE.BLEUUID
 - `altitudeMeters` は `ALTITUDE_VALID` が立っているときだけ非 nil。`accuracy` / `speed` の 255 は「不明 / 255 以上」。
 - 未送信時の read 応答は `LocationPacket.invalid`（version=1、flags=0、他 0）。
 
-> 仕様 §3.3 の検証範囲は一度 `±90_000_000` / `±180_000_000` と 10 倍小さく誤記されていましたが、2026-11-15 に `±900_000_000` / `±1_800_000_000` へ修正されました。本実装とテストは修正後の値に一致しています。
+仕様 §3.3 の検証範囲（`±900_000_000` / `±1_800_000_000`）と実装・テストは一致しています。
 
 ## 3. Extended Location Packet（8 bytes）
 
@@ -49,7 +49,12 @@ UUID は文字列で保持し、CoreBluetooth への変換は `P2PGPSBLE.BLEUUID
   - SET_EXTENDED `0x05` + uint8（2 bytes）
   - RESET `0x7F`（1 byte）
 - 未知 opcode（`AUTH 0x10` を含む）は `unknownOpcode`、長さ不一致は `badLength`、0 長は `empty`。送信側はこれらを無視して `last_error` を設定。
-- 間隔の正規化は `resolvedIntervalMilliseconds`: `0` → 1000、それ以外は 100…60000 にクランプ。デコードでは生値を保持し、適用時に正規化します。
+- `interval_ms` は仕様 §5.1（v1.0.1 で明確化）の**境界クランプ方式**:
+  - `encoded()` は**生値**を書く（受信側 = iPad が書く値。例: `START(0)` は `010000`）。
+  - 送信側は `resolvedIntervalMilliseconds` で正規化して適用する: `0` → 1000、`1`–`99` → 100、`100`–`60000` → そのまま、`60001`–`65535` → 60000。
+  - `decode()` は生値を保持し、正規化は `resolvedIntervalMilliseconds` を読む側（送信側）が行う。
+  - Status の `interval_ms` は正規化後の値（送信側が適用中の値）を返す。
+- テストベクタ（`Tests/P2PGPSProtocolTests/Vectors/control.json`）は `hex`（生値）と `normalized_interval_ms`（適用値）を分離して検証する。
 
 ## 5. Status
 
@@ -59,7 +64,12 @@ UUID は文字列で保持し、CoreBluetooth への変換は `P2PGPSBLE.BLEUUID
 
 ## 6. テストベクタ
 
-`Tests/P2PGPSProtocolTests/ProtocolVectorTests.swift` に仕様 §10 のベクタを実装しています。
+テストは 2 層あります。
+
+1. **`Tests/P2PGPSProtocolTests/ProtocolVectorTests.swift`** — Swift で仕様 §10 の代表ベクタを直接検証（高速・自己完結）。
+2. **`Tests/P2PGPSProtocolTests/Vectors/*.json` + `ProtocolVectorJSONTests.swift`** — `p2pgps-protocol` の `tests/vectors/*.json` を**手動でコピーしたミラー**を `Bundle.module` から読み、encode / decode / validate を全ベクタで検証する。共有契約データを実際に読むことで、参照実装との乖離をテスト失敗として検出できる。
+
+> CI で `p2pgps-protocol` を checkout する仕組みは未導入です。ベクタを更新するときは上流からコピーし直してください（`Vectors/README.md` 参照）。Android は現時点で値をハードコードしているため、3 実装が同じ JSON を読む状態にはまだなっていません（実装間の乖離検出は protocol リポジトリの `test_spec_consistency.py` の範囲）。
 
 | ベクタ | 期待 |
 | :--- | :--- |
@@ -70,10 +80,10 @@ UUID は文字列で保持し、CoreBluetooth への変換は `P2PGPSBLE.BLEUUID
 | 未知バージョン | `unsupportedVersion` |
 | sequence 巻き戻り | `rewound(by:)`、パケットは受理 |
 | Extended | `01 01 57 0C 39 30 08 00` |
-| Control 各 opcode | 上記のバイト列 |
+| Control 各 opcode | 生値のバイト列（例: `START(0)` = `01 00 00`）+ `normalized_interval_ms` |
 | Status | `01 01 E8 03 57 03 00 00` |
 
-東京駅の期待バイトは仕様 §3.2 の修正後の値（`lat 356812360 = 0x15448648`）と一致しています。
+東京駅の期待バイトは仕様 §3.2 の hex と一致しています（`lat 356812360 = 0x15448648`）。
 
 ## 7. 実装上の注意
 

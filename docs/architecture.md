@@ -77,7 +77,7 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 
 | 層 | 方法 |
 | :--- | :--- |
-| Protocol | XCTest。仕様 §10 のテストベクタ（東京駅・南極・Null Island・範囲外・未知バージョン・sequence 巻き戻り・Extended・Control 各 opcode・Status） |
+| Protocol | XCTest。仕様 §10 の代表ベクタを Swift で直接検証し、加えて `p2pgps-protocol/tests/vectors/*.json` の手動ミラー（`Tests/P2PGPSProtocolTests/Vectors/`）を `Bundle.module` から読んで全ベクタの encode / decode / validate を検証する |
 | Core | XCTest。FixFilter の外れ値 / 平滑化、設定の既定値、ログの丸め |
 | BLE | 実機必須。プロトコル層から分離し、状態機械は純粋ロジックとしてテスト可能な形にしている |
 | 注入 | 実機必須。CI はコンパイルのみ。手順は docs/receiver-setup.md |

@@ -222,7 +222,7 @@ struct PrimaryActionButton: View {
                 }
                 Text(title).font(P2PFont.labelEmphasis)
             }
-            .foregroundStyle(P2PColor.paper)
+            .foregroundStyle(P2PColor.onPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: P2PSpacing.primaryHeight)
             .background(
@@ -255,9 +255,8 @@ struct LiveToggleButton: View {
                 Spacer(minLength: 0)
                 Text(isOn ? "ON" : "OFF")
                     .font(P2PFont.metric)
-                    .opacity(0.8)
             }
-            .foregroundStyle(isOn ? P2PColor.paper : P2PColor.ink)
+            .foregroundStyle(isOn ? P2PColor.onLiveFill : P2PColor.ink)
             .padding(.horizontal, 14)
             .frame(maxWidth: .infinity)
             .frame(height: P2PSpacing.primaryHeight)

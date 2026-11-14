@@ -13,7 +13,7 @@ iPhone（または Android）で取得した GPS 位置を **BLE GATT** で iPad
 1. **プロトコル v1 の厳密な実装**
    - 128-bit UUID、20 bytes Location Packet、8 bytes Extended Location、Control / Status を仕様どおりに encode / decode。
    - 受信側の検証（長さ・バージョン・予約ビット・座標範囲・Null Island・sequence 巻き戻り・stale）を実装。
-   - 仕様 §10 のテストベクタを XCTest で検証（macOS で `swift test`）。
+   - 仕様 §10 のテストベクタを XCTest で検証（macOS で `swift test`）。`p2pgps-protocol/tests/vectors/*.json` の手動ミラーも読み込み、共有ベクタで encode / decode / validate を検証。
 2. **Receiver（iPad）**
    - ステータスレール（接続 LED・送信元名・最終受信・電波・精度）。
    - フルブリード地図にクロスヘア + レンジリング、軌跡はパイン色のライン。
@@ -54,7 +54,7 @@ p2pgps-ios/
 │   ├── P2PGPSLocation/          # CoreLocation: SenderLocationService / BackgroundKeepAlive
 │   ├── P2PGPSInjection/         # TLocation 移植: FFI / pairing file / DDI / Tunnel / 位置注入 / URL スキーム
 │   └── P2PGPSApp/               # SwiftUI: @main / Home / Receiver / Sender / Settings / Diagnostics
-├── Tests/P2PGPSProtocolTests/   # 仕様 §10 のテストベクタ + Core のテスト
+├── Tests/P2PGPSProtocolTests/   # 仕様 §10 のテストベクタ + 共有 vectors JSON のミラー + Core のテスト
 ├── docs/                        # setup-linux / receiver-setup / architecture / protocol / design
 ├── wiki/                        # GitHub Wiki 用 Markdown
 └── .github/workflows/ci.yml     # macOS ランナー: swift test → iOS クロスビルド → xcodebuild
@@ -83,6 +83,11 @@ swift test
 ```
 
 `P2PGPSProtocol` / `P2PGPSCore` は Foundation のみに依存するため、macOS で XCTest が動きます。iOS 専用ターゲットは `#if canImport(UIKit)` でガードしてあり、`swift test` がパッケージ全体をビルドしても壊れません。
+
+テストは 2 層です。
+
+- `Tests/P2PGPSProtocolTests/ProtocolVectorTests.swift`: 仕様 §10 の代表ベクタを Swift で直接検証。
+- `Tests/P2PGPSProtocolTests/Vectors/*.json`: `p2pgps-protocol/tests/vectors/*.json` の**手動ミラー**（MIT）。`ProtocolVectorJSONTests.swift` が `Bundle.module` から読み、全ベクタの encode / decode / validate を検証します。ベクタ更新時は上流からコピーし直してください（[Vectors/README.md](Tests/P2PGPSProtocolTests/Vectors/README.md)）。
 
 ### 3. xtool でビルド（Linux / WSL、Mac 不要）
 
