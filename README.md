@@ -43,7 +43,7 @@ p2pgps-ios/
 ├── project.yml                  # XcodeGen（CI の Xcode リンク検証用）
 ├── PRODUCT.md / DESIGN.md       # 正本はリポジトリルートの共通版。ここは iOS 実装メモ
 ├── Resources/                   # アプリアイコン（PNG）
-├── Vendor/idevice/              # idevice.h + module.modulemap（MIT）。.a は fetch スクリプトで取得
+├── Vendor/idevice/              # include/ に idevice.h + module.modulemap（MIT）。.a は fetch スクリプトで取得
 ├── scripts/
 │   ├── fetch-vendor.sh          # libidevice_ffi.a の取得 + SHA-256 検証（macOS/Linux/WSL）
 │   └── fetch-vendor.ps1         # 同（Windows PowerShell）
