@@ -49,8 +49,10 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 - すべての FFI 呼び出しは `LocationSimulationCommandQueue`（直列 `DispatchQueue`）上で実行。`LocationSimulationState` のハンドルはこのキューに閉じ込める。DDI のマウントチェック / pairing file 読み取り / `mountPersonalDDI` も `MountingProgress` 経由で同じキューに載せる（main スレッドで FFI を呼ばない）。
 - `LocationSimulationEngine` が UI 向けファサード。5 秒ごとの再送、状態の `@Published`、日本語エラーメッセージを担当。トンネル系の失敗（providerCreate / remoteServer）では `markTunnelDisconnected()` を呼び、次回フォアグラウンドで再構築できるようにする。
 - **ライフサイクル（TLocation 移植）**: アプリが background → active に戻ったとき、注入セッションが継続していなければ `startTunnelAfterPendingLocationCommands()` でトンネルを再構築する。セッションが継続中の場合は `LocationSimulationSession` の session-ended 通知を待ってから再構築する（単一占有エンドポイントを奪わないため）。
-- `URLSchemeLocationFallback`: 埋め込みエンジンが使えない場合に `tlocation://simulate-location?lat=..&lon=..` / `tlocation://clear-location` へ委譲。`canOpenURL` で TLocation の有無を確認し、1 秒に 1 回へ間引く。委譲ログに座標は出さない（プライバシー）。
+- **ON → OFF の順序保証（R-1）**: `set()` は FFI をキューに積むだけで `isSimulating` は完了時に初めて true になる。そのため `clear()` は「セッションが無い」と判断しても**必ず FFI clear をキューに積む**（no-session は成功扱い）。各操作は世代番号（`operationGeneration`）を持ち、キューの先頭と main の完了時に「自分が最新か」を再確認する。古い `set` は FFI を呼ばずに捨てるため、「注入 ON → 直後 OFF」でもデバイス側にセッションは残らない。
+- `URLSchemeLocationFallback`: 埋め込みエンジンが使えない場合に `tlocation://simulate-location?lat=..&lon=..` / `tlocation://clear-location` へ委譲。`canOpenURL` で TLocation の有無を確認し、1 秒に 1 回へ間引く。`UIApplication.open` の完了で成功/失敗を反映し、失敗時は注入状態を解除してエラー表示する（R-6）。委譲ログに座標は出さない（プライバシー）。
 - **DDI のサプライチェーン**: `DeveloperDiskImageService` は `doronz88/DeveloperDiskImage` の固定コミット `a1020f81b6429f5ce40408cbe21c690512b613b5` から取得し、3 ファイルすべてを SHA-256 で検証する。不一致は削除してエラー表示。再取得は全ファイルを一時名で取得して検証後に置換する。
+- **pairing file の保護（R-2）**: Application Support/Pairing に 0600 + `FileProtectionType.completeUntilFirstUserAuthentication` + バックアップ除外で保存する。`.complete` ではなく「初回ロック解除後」にしているのは、ロック中にセッションを再構築する際 `rp_pairing_file_read` がファイルを読む必要があるため。属性設定は `prepareURLOnce()` で初回/変更時のみ行う（R-7）。
 - **既知の未解決事項（M6）**: `remote_server` ハンドルの所有権（`location_simulation_new` が所有するか）は上流でも未確定。現在は上流どおり「所有する」前提で `cleanup()` から free しない（二重 free の回避を優先）。リークの有無は実機でセッションを開閉し、Instruments / `lsof` でソケット数を確認する必要がある。
 
 ## 5. 並行性
@@ -59,6 +61,7 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 - `P2PGPSBLE` / `P2PGPSLocation` / `P2PGPSInjection` / `P2PGPSApp` は Swift 5 言語モード。TLocation 由来のコード（静的ハンドル・`DispatchQueue`）をそのまま保つためです。テストターゲットも Swift 5 言語モード（XCTest と SwiftPM の `Bundle.module` アクセサが strict concurrency 前提でないため）。
 - CoreBluetooth のデリゲートは `queue: .main` で生成し、`@Published` の更新はメインスレッドに固定。
 - 位置注入の FFI は直列キュー、状態の publish は `DispatchQueue.main.async`。`JITEnableContext` のハンドル操作（`startTunnel` / `ensureTunnel` / `invalidateTunnel`）も同じ直列キュー上でのみ行う。
+- `LocationSimulationEngine` の操作世代番号（`operationGeneration`）は main で更新し FFI キューから参照するため、`NSLock` で保護する（R-1）。
 
 ## 6. 2 つのビルドシステム
 
@@ -72,10 +75,13 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 
 ## 7. バックグラウンド
 
-- Receiver: `bluetooth-central` + `location`。BLE 受信は `bluetooth-central` で起床できるが、注入の 5 秒再送は `DispatchSourceTimer` なので、iOS に suspend されると止まる。注入 ON の間は `ReceiverController` が `BackgroundKeepAlive`（低精度・`allowsBackgroundLocationUpdates`）を開始し、画面を閉じてもプロセスを維持する。停止は注入 OFF・Receiver 画面を離れたとき・設定でバックグラウンド維持を OFF にしたとき。
+- Receiver: `bluetooth-central` + `location`。BLE 受信は `bluetooth-central` で起床できるが、注入の 5 秒再送は `DispatchSourceTimer` なので、iOS に suspend されると止まる。注入 ON の間は `ReceiverController` が `BackgroundKeepAlive`（低精度・`allowsBackgroundLocationUpdates`）を開始し、画面を閉じてもプロセスを維持する。**注入 ON の間は Receiver 画面を離れても keep-alive を維持する**（R-4）。停止は注入 OFF か、設定でバックグラウンド維持を OFF にしたとき。
+- バッテリーとのトレードオフ: keep-alive は低精度（3 km）・`distanceFilter = CLLocationDistanceMax` で更新頻度は低いが、注入 ON の間は位置情報セッションが動き続ける。バッテリーを優先する場合は設定で OFF にできる（その場合、画面 OFF や長時間のバックグラウンドで注入が止まり得る）。
 - Sender: `bluetooth-peripheral` + `location`。送信中は CoreLocation の更新でアプリを起こし続け、fix 到着時に送信する（タイマーではなく fix 駆動なのでバックグラウンドでも止まりにくい）。停止中は位置セッションを止める。
 - 位置情報は「常に許可」を推奨（「使用中のみ」だとバックグラウンドで停止）。設定画面の「バックグラウンド維持（受信側）」で Receiver の keep-alive を無効化できる。
 - フォアグラウンド復帰時は `RootView` が `ReceiverController.handleScenePhaseActive()` を呼び、注入セッションが無ければトンネルを再構築する（§4）。
+- **既知の制約（R-8）**: アプリを再起動すると、前回のプロセスが残したデバイス側シミュレーションセッションはアプリのハンドルが無いため `clear()` では消せない。再起動後は注入 OFF の状態から始まり、デバイス側に前回の座標が残っている可能性がある（再起動・再ログインで解消）。
+- **既知の制約（R-11）**: RSSI のポーリングは main run loop の `Timer` 依存のため、バックグラウンド中は SignalBars が古い値のままになり得る（表示のみの制約、注入には影響しない）。
 
 ## 8. テスト戦略
 

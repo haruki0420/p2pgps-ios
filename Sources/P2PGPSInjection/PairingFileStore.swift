@@ -51,7 +51,9 @@ public enum PairingFileStore {
     /// imported one.
     ///
     /// Any Documents copy is deleted after it has been migrated, and the
-    /// canonical file is re-protected on every call.
+    /// canonical file is re-protected on every call. Prefer ``prepareURLOnce()``
+    /// on hot paths (every fix / every resend) to avoid re-setting file
+    /// attributes repeatedly (review R-7).
     @discardableResult
     public static func prepareURL(fileManager: FileManager = .default) -> URL {
         let destination = url
@@ -76,6 +78,30 @@ public enum PairingFileStore {
         return destination
     }
 
+    /// Cached variant of ``prepareURL(fileManager:)`` for hot paths.
+    ///
+    /// The full migration + protection pass runs on the first call, after
+    /// ``replace(with:fileManager:)`` (new pairing file) and after
+    /// ``remove(fileManager:)``. Everything in between is a lock + existence
+    /// check, so the 1 Hz injection path does not re-apply 0600 / Data
+    /// Protection / backup attributes on every fix (review R-7).
+    @discardableResult
+    public static func prepareURLOnce(fileManager: FileManager = .default) -> URL {
+        cacheLock.lock()
+        let cached = cachedURL
+        cacheLock.unlock()
+
+        if let cached, fileManager.fileExists(atPath: cached.path) {
+            return cached
+        }
+
+        let prepared = prepareURL(fileManager: fileManager)
+        cacheLock.lock()
+        cachedURL = prepared
+        cacheLock.unlock()
+        return prepared
+    }
+
     /// Replaces the stored pairing file with `sourceURL`.
     ///
     /// The file is copied straight into Application Support (never left in
@@ -88,6 +114,7 @@ public enum PairingFileStore {
         try replaceItem(at: url, with: sourceURL, fileManager: fileManager)
         protectPairingFile(at: url, fileManager: fileManager)
         removeDocumentsCopies(fileManager: fileManager)
+        invalidateCache()
     }
 
     /// Imports a pairing file chosen with the system document picker.
@@ -114,6 +141,18 @@ public enum PairingFileStore {
         }
         removeLegacyCopies(fileManager: fileManager)
         removeDocumentsCopies(fileManager: fileManager)
+        invalidateCache()
+    }
+
+    // MARK: - Cache (review R-7)
+
+    private static let cacheLock = NSLock()
+    private static var cachedURL: URL?
+
+    private static func invalidateCache() {
+        cacheLock.lock()
+        cachedURL = nil
+        cacheLock.unlock()
     }
 
     // MARK: - Locations
@@ -213,8 +252,13 @@ public enum PairingFileStore {
 
         #if os(iOS)
         do {
+            // `.completeUntilFirstUserAuthentication` (not `.complete`): the
+            // pairing file must be readable while the device is locked,
+            // because the RSD session can be rebuilt in the background (review
+            // R-2). `.complete` would make `rp_pairing_file_read` fail after a
+            // lock and silently stop injection until the next unlock.
             try fileManager.setAttributes(
-                [.protectionKey: FileProtectionType.complete],
+                [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
                 ofItemAtPath: url.path
             )
         } catch {

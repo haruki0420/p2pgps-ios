@@ -34,7 +34,7 @@ pairing file は、この iPad 自身のペアリングレコードです。取�
 - **StikDebug / SideStore の手順で取得**: [StikDebug-Guide の pairing file ガイド](https://github.com/StikDebug/StikDebug-Guide/blob/main/pairing_file.md) の手順で `pairingFile.mobiledevicepairing` を生成し、Files アプリに保存します。
 - すでに StikDebug / TLocation を使っている場合は、そのアプリで使っている pairing file をそのまま利用できます。
 
-> pairing file は秘密情報です。他人に共有したり、リポジトリにコミットしたりしないでください。本アプリは Application Support の `Pairing/` 配下に 0600・Data Protection・バックアップ除外で保存し、Documents に残ったコピーは読み込み後に削除します。ログには出しません。
+> pairing file は秘密情報です。他人に共有したり、リポジトリにコミットしたりしないでください。本アプリは Application Support の `Pairing/` 配下に 0600・Data Protection（初回ロック解除後はロック中も読める `completeUntilFirstUserAuthentication`）・バックアップ除外で保存し、Documents に残ったコピーは読み込み後に削除します。ログには出しません。
 
 ## 4. アプリに pairing file を読み込む
 
@@ -66,6 +66,7 @@ DDI の取得元: [doronz88/DeveloperDiskImage](https://github.com/doronz88/Deve
 | トンネル接続に失敗する | LocalDevVPN が接続中か。Wi-Fi に接続しているか。ターゲット IP が `10.7.0.1` か。 |
 | pairing file が無効と言われる | pairing file を取得し直す。期限切れの可能性。 |
 | DDI がマウントできない | DDI を再取得してから再試行。LocalDevVPN の接続を確認。 |
-| 注入は成功するが位置が戻る | 送信側のアプリがバックグラウンドで停止していないか。位置情報の「常に許可」を確認。 |
+| 注入は成功するが位置が戻る | 送信側のアプリがバックグラウンドで停止していないか。位置情報の「常に許可」を確認。受信側は設定の「バックグラウンド維持（受信側）」が ON か確認。 |
+| アプリ再起動後に位置が元に戻らない | 前回のプロセスが残したデバイス側セッションはアプリからは消せません。iPad を再起動するか、注入を ON → OFF してから再試行してください。 |
 
 詳しくは [wiki/Troubleshooting.md](../wiki/Troubleshooting.md) を参照してください。

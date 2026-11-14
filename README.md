@@ -179,9 +179,13 @@ UI の視覚世界・トークン・anti-slop ルールの正本はリポジト�
 - iOS のバックグラウンドではアドバタイズのローカルネームが落ちることがあり、その間は受信側の名前フィルタで送信元が見えにくくなります（接続済みなら影響なし）。
 - `libidevice_ffi.a` は arm64 iOS 専用です。macOS ネイティブビルドではリンクしません（`swift test` 用にリンカフラグを iOS のみに限定）。
 - `remote_server` ハンドルの所有権（`location_simulation_new` が所有するか）は上流でも未解決です。現在は上流どおり二重 free を避ける実装で、リークの有無は実機でセッションを開閉して確認が必要です。
+- **アプリ再起動後、デバイス側に前回のシミュレーションセッションが残る場合があります**（アプリはハンドルを持たないため `clear()` で消せません）。再起動・再ログインで解消します。
+- **バックグラウンド維持はバッテリーとのトレードオフ**です。注入 ON の間は Receiver 画面を離れても低精度の位置情報セッションを維持します（設定で OFF 可。OFF の場合、画面 OFF・長時間のバックグラウンドで注入が止まり得ます）。
+- RSSI のポーリングは main run loop の `Timer` 依存のため、バックグラウンド中は SignalBars が古い値のままになり得ます（表示のみの制約）。
+- `DeveloperDiskImageService.isDownloaded` はファイルの存在チェックのみです（SHA-256 検証は `downloadMissingFiles()` が起動時・ダウンロード時に実施）。
 
 ## ライセンスと帰属
 
 - 本リポジトリ: **AGPL-3.0**（[LICENSE](LICENSE)）
-- 上流: StikDebug / TLocation（AGPL-3.0）、idevice（MIT、全文は [Vendor/idevice/LICENSE](Vendor/idevice/LICENSE)）、libplist（LGPL-2.1、`idevice.h` 内の宣言のみ）、xtool（MIT）。詳細は [NOTICE](NOTICE)。
+- 上流: StikDebug / TLocation（AGPL-3.0）、idevice（MIT、全文は [Vendor/idevice/LICENSE](Vendor/idevice/LICENSE)）、libplist（LGPL-2.1、`idevice.h` 内の宣言のみ。全文は [Vendor/idevice/LICENSE.libplist](Vendor/idevice/LICENSE.libplist)）、xtool（MIT）。詳細は [NOTICE](NOTICE)。
 - プロトコル仕様と Python リファレンス実装（`p2pgps-protocol`）は MIT です。

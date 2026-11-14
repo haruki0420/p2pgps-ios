@@ -349,14 +349,39 @@ public final class LocationSimulationEngine: ObservableObject {
     private var resendTimer: DispatchSourceTimer?
     private let log = LogStore.shared
     /// Monotonic token so a slow FFI call cannot clear `isWorking` for a newer
-    /// request (review L-7).
+    /// request (review L-7) and so a queued stale `set` never runs after the
+    /// user turned injection off (review R-1).
+    ///
+    /// Written on the main thread (`set` / `clear`), read from the serial FFI
+    /// queue, so it is guarded by `generationLock`.
+    private let generationLock = NSLock()
     private var operationGeneration = 0
 
     private init() {}
 
+    private func beginOperation() -> Int {
+        generationLock.lock()
+        operationGeneration += 1
+        let value = operationGeneration
+        generationLock.unlock()
+        return value
+    }
+
+    private var latestGeneration: Int {
+        generationLock.lock()
+        defer { generationLock.unlock() }
+        return operationGeneration
+    }
+
     // MARK: - Public API
 
     /// Starts simulating `latitude` / `longitude` and keeps it alive.
+    ///
+    /// The FFI call is only enqueued here; the published `isSimulating` flag
+    /// flips on the main thread when it completes. Because `clear()` always
+    /// enqueues its own FFI call, a queued `set` that has been superseded must
+    /// not run at all — otherwise "injection ON → OFF immediately" would leave
+    /// a device-side session behind (review R-1).
     public func set(latitude: Double, longitude: Double) {
         guard latitude.isFinite, longitude.isFinite,
               (-90...90).contains(latitude), (-180...180).contains(longitude) else {
@@ -365,16 +390,21 @@ public final class LocationSimulationEngine: ObservableObject {
         }
 
         stopResendLoop()
-        operationGeneration += 1
-        let generation = operationGeneration
+        let generation = beginOperation()
         isWorking = true
         let targetIP = DeviceConnectionContext.targetIPAddress
-        let pairingPath = PairingFileStore.prepareURL().path
+        let pairingPath = PairingFileStore.prepareURLOnce().path
 
         queue.async { [weak self] in
+            guard let self else { return }
+            // Superseded while waiting in the queue (a newer set or a clear):
+            // skip the FFI call entirely. The newest operation's completion is
+            // responsible for `isWorking` / the published state.
+            guard generation == self.latestGeneration else { return }
+
             let code = simulate_location(targetIP, latitude, longitude, pairingPath)
             DispatchQueue.main.async {
-                guard let self, generation == self.operationGeneration else { return }
+                guard generation == self.latestGeneration else { return }
                 self.isWorking = false
                 self.sessionOpen = LocationSimulationSession.isOpen
                 if code == LocationSimulationStatus.ok {
@@ -400,31 +430,27 @@ public final class LocationSimulationEngine: ObservableObject {
     }
 
     /// Clears the simulated location and stops the resend loop.
+    ///
+    /// The FFI clear is **always** enqueued, even when the app believes there
+    /// is no session: `set()` only enqueues its FFI call, so "injection ON →
+    /// OFF immediately" would otherwise leave a device-side session behind
+    /// (review R-1). A no-session `clear_simulated_location` is treated as
+    /// success (review L-6).
     public func clear() {
         stopResendLoop()
 
-        // With no session there is nothing to clear; treat it as success
-        // instead of surfacing the upstream "no session" error (review L-6).
-        guard LocationSimulationSession.isOpen || isSimulating else {
-            // Invalidate any in-flight `set` so it cannot resurrect the session
-            // after the user turned injection off.
-            operationGeneration += 1
-            isSimulating = false
-            appliedLatitude = nil
-            appliedLongitude = nil
-            sessionOpen = false
-            lastError = nil
-            return
-        }
-
-        operationGeneration += 1
-        let generation = operationGeneration
+        let generation = beginOperation()
         isWorking = true
 
         queue.async { [weak self] in
+            guard let self else { return }
+            // A newer set/clear supersedes this one; the newest operation owns
+            // the device state and the published flags.
+            guard generation == self.latestGeneration else { return }
+
             let code = clear_simulated_location()
             DispatchQueue.main.async {
-                guard let self, generation == self.operationGeneration else { return }
+                guard generation == self.latestGeneration else { return }
                 self.isWorking = false
                 self.isSimulating = false
                 self.appliedLatitude = nil
@@ -432,6 +458,7 @@ public final class LocationSimulationEngine: ObservableObject {
                 self.sessionOpen = LocationSimulationSession.isOpen
                 if code == LocationSimulationStatus.ok
                     || code == LocationSimulationStatus.locationClear {
+                    // 12 = "no session to clear"; not an error (review L-6).
                     self.lastError = nil
                 } else {
                     self.lastError = Self.message(for: code)
@@ -460,7 +487,7 @@ public final class LocationSimulationEngine: ObservableObject {
     private func startResendLoop(latitude: Double, longitude: Double) {
         stopResendLoop()
         let targetIP = DeviceConnectionContext.targetIPAddress
-        let pairingPath = PairingFileStore.prepareURL().path
+        let pairingPath = PairingFileStore.prepareURLOnce().path
         let interval = max(resendInterval, 1)
 
         let timer = DispatchSource.makeTimerSource(queue: queue)

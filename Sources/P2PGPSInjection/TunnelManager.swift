@@ -61,7 +61,7 @@ public final class TunnelManager: ObservableObject {
             return
         }
 
-        let pairingFileURL = PairingFileStore.prepareURL()
+        let pairingFileURL = PairingFileStore.prepareURLOnce()
         guard FileManager.default.fileExists(atPath: pairingFileURL.path) else {
             isConnected = false
             lastError = "pairing file がありません。設定から pairing file を読み込んでください。"

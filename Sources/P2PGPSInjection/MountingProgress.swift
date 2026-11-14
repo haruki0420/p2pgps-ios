@@ -111,7 +111,7 @@ public final class MountingProgress: ObservableObject {
     ///
     /// Must only be called on `LocationSimulationCommandQueue`.
     private func isPairingFileReadableOnQueue() -> Bool {
-        let pairingPath = PairingFileStore.prepareURL().path
+        let pairingPath = PairingFileStore.prepareURLOnce().path
         var pairingFile: OpaquePointer?
         let error = rp_pairing_file_read(pairingPath, &pairingFile)
         if error != nil {

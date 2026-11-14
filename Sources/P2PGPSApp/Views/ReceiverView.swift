@@ -103,9 +103,6 @@ struct ReceiverView: View {
             controller.onAppear()
             centerIfNeeded()
         }
-        .onDisappear {
-            controller.onDisappear()
-        }
         .onChange(of: central.latestFix?.latitude) { _, _ in
             centerIfNeeded()
         }

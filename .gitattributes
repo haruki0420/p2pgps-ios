@@ -12,5 +12,7 @@
 *.h text eol=lf
 *.modulemap text eol=lf
 LICENSE text eol=lf
+LICENSE.libplist text eol=lf
 NOTICE text eol=lf
 .gitignore text eol=lf
+.gitattributes text eol=lf

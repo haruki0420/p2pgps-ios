@@ -116,7 +116,7 @@ final class JITEnableContext {
     }
 
     private func getPairingFile() throws -> OpaquePointer {
-        let pairingFileURL = PairingFileStore.prepareURL()
+        let pairingFileURL = PairingFileStore.prepareURLOnce()
 
         guard FileManager.default.fileExists(atPath: pairingFileURL.path) else {
             throw makeError("Pairing file not found!", code: -17)

@@ -57,9 +57,13 @@ final class ReceiverController: ObservableObject {
     private var lastTrailAppend = Date.distantPast
     private var lastInjectedCoordinate: CLLocationCoordinate2D?
     private var lastURLSchemeDelegation = Date.distantPast
-    private var isOnScreen = false
     private var isKeepAliveRunning = false
     private var shouldAttemptTunnelReconnect = false
+    /// Whether this process has ever asked the engine / TLocation to simulate a
+    /// coordinate. `stopInjectionSession()` only sends a device clear when this
+    /// is true (or a session is known to exist), so toggling injection OFF
+    /// before any fix does not produce a spurious FFI error (review R-1).
+    private var hasRequestedSimulation = false
     private let maximumTrailPoints = 120
     private let log = LogStore.shared
 
@@ -143,11 +147,16 @@ final class ReceiverController: ObservableObject {
             .store(in: &cancellables)
 
         // A deferred tunnel rebuild runs as soon as the simulation session
-        // releases the RSD endpoint (review M4).
+        // releases the RSD endpoint (review M4). Defer one run-loop turn so the
+        // engine's own main-queue completion (`isSimulating = false`) runs
+        // first; otherwise the reconnect would be deferred again because the
+        // session still looked active (review R-5).
         NotificationCenter.default.publisher(for: .p2pLocationSimulationSessionEnded)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.attemptDeferredTunnelReconnect(trigger: "the location simulation ending")
+                DispatchQueue.main.async {
+                    self?.attemptDeferredTunnelReconnect(trigger: "the location simulation ending")
+                }
             }
             .store(in: &cancellables)
     }
@@ -156,7 +165,6 @@ final class ReceiverController: ObservableObject {
 
     /// Starts scanning when the screen appears.
     func onAppear() {
-        isOnScreen = true
         engine.refreshMountState()
         updateKeepAliveState()
         if wantsInjection {
@@ -170,12 +178,6 @@ final class ReceiverController: ObservableObject {
         if central.state == .idle {
             central.startScanning()
         }
-    }
-
-    /// Stops the background keep-alive when leaving the Receiver screen.
-    func onDisappear() {
-        isOnScreen = false
-        updateKeepAliveState()
     }
 
     /// Scene went to the background: remember that the tunnel may need a rebuild
@@ -235,11 +237,23 @@ final class ReceiverController: ObservableObject {
     }
 
     /// Stops the device session without changing the user's preference.
+    ///
+    /// The FFI clear is sent whenever a simulation was requested, even if the
+    /// engine has not finished `set()` yet: "injection ON → OFF immediately"
+    /// must still clear the device-side session (review R-1).
     private func stopInjectionSession() {
         isInjecting = false
         lastInjectedCoordinate = nil
         lastInjectedAt = nil
         updateKeepAliveState()
+
+        let needsDeviceClear = hasRequestedSimulation
+            || engine.isSimulating
+            || engine.sessionOpen
+            || engine.isWorking
+        hasRequestedSimulation = false
+
+        guard needsDeviceClear else { return }
         if settings.useTLocationURLSchemeFallback {
             URLSchemeLocationFallback.clear()
         } else {
@@ -291,9 +305,19 @@ final class ReceiverController: ObservableObject {
             let now = Date()
             guard now.timeIntervalSince(lastURLSchemeDelegation) >= 1.0 else { return }
             lastURLSchemeDelegation = now
-            URLSchemeLocationFallback.simulate(latitude: fix.latitude, longitude: fix.longitude)
+            hasRequestedSimulation = true
             isInjecting = true
             lastInjectedAt = now
+            // `UIApplication.open` only tells us whether the URL was handed to
+            // the system; reflect a failure in the UI instead of claiming a
+            // successful injection (review R-6).
+            URLSchemeLocationFallback.simulate(latitude: fix.latitude, longitude: fix.longitude) { success in
+                guard !success else { return }
+                DispatchQueue.main.async { [weak self] in
+                    self?.isInjecting = false
+                    self?.errorMessage = "TLocation を開けませんでした。URL スキーム委譲を OFF にするか、TLocation をインストールし直してください。"
+                }
+            }
             return
         }
 
@@ -314,6 +338,7 @@ final class ReceiverController: ObservableObject {
         lastInjectedCoordinate = CLLocationCoordinate2D(latitude: fix.latitude, longitude: fix.longitude)
         lastInjectedAt = Date()
         isInjecting = true
+        hasRequestedSimulation = true
         engine.set(latitude: fix.latitude, longitude: fix.longitude)
         // Coordinates are logged only at the user's configured precision
         // (review M13 / spec §8).
@@ -325,10 +350,15 @@ final class ReceiverController: ObservableObject {
         )
     }
 
-    // MARK: - Background keep-alive (review M1)
+    // MARK: - Background keep-alive (review M1 / R-4)
 
+    /// Keeps the low-accuracy location session running for as long as injection
+    /// is ON — even if the user navigates away from the Receiver screen — so a
+    /// background transition cannot suspend the 5-second resend loop
+    /// (review R-4). This trades battery for injection reliability; the setting
+    /// can turn it off.
     private func updateKeepAliveState() {
-        let shouldRun = isOnScreen && wantsInjection && settings.keepAliveLocationUpdates
+        let shouldRun = wantsInjection && settings.keepAliveLocationUpdates
         if shouldRun {
             guard !isKeepAliveRunning else { return }
             isKeepAliveRunning = true

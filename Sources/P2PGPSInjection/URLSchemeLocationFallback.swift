@@ -17,6 +17,10 @@
 //  installed and set up separately. Coordinates are deliberately NOT written to
 //  the log (review M7); only the fact that a delegation happened is logged.
 //
+//  The completion handlers report whether `UIApplication.open` actually handed
+//  the URL to the system, so the caller can drop the "injecting" state instead
+//  of claiming success unconditionally (review R-6).
+//
 
 import Foundation
 #if SWIFT_PACKAGE
@@ -63,21 +67,34 @@ public enum URLSchemeLocationFallback {
         URL(string: "\(scheme)://clear-location")
     }
 
-    /// Opens TLocation to simulate the coordinate. Returns `false` when the
-    /// platform cannot open URLs (macOS build) or the URL is malformed.
+    /// Opens TLocation to simulate the coordinate.
+    ///
+    /// - Parameter completion: Called on the main queue with `true` when the
+    ///   system accepted the URL, `false` when it could not be opened (or the
+    ///   platform cannot open URLs at all).
+    /// - Returns: `false` immediately only when the URL is malformed / the
+    ///   platform cannot open URLs.
     @discardableResult
-    public static func simulate(latitude: Double, longitude: Double) -> Bool {
+    public static func simulate(
+        latitude: Double,
+        longitude: Double,
+        completion: ((Bool) -> Void)? = nil
+    ) -> Bool {
         guard let url = simulateURL(latitude: latitude, longitude: longitude) else {
+            completion?(false)
             return false
         }
-        return open(url)
+        return open(url, completion: completion)
     }
 
     /// Opens TLocation to clear the simulated location.
     @discardableResult
-    public static func clear() -> Bool {
-        guard let url = clearURL else { return false }
-        return open(url)
+    public static func clear(completion: ((Bool) -> Void)? = nil) -> Bool {
+        guard let url = clearURL else {
+            completion?(false)
+            return false
+        }
+        return open(url, completion: completion)
     }
 
     /// Locale-independent decimal formatting: a comma decimal separator would
@@ -86,7 +103,7 @@ public enum URLSchemeLocationFallback {
         String(format: "%.7f", locale: Locale(identifier: "en_US_POSIX"), arguments: [value])
     }
 
-    private static func open(_ url: URL) -> Bool {
+    private static func open(_ url: URL, completion: ((Bool) -> Void)? = nil) -> Bool {
         #if canImport(UIKit)
         UIApplication.shared.open(url, options: [:]) { success in
             if success {
@@ -94,10 +111,16 @@ public enum URLSchemeLocationFallback {
             } else {
                 LogStore.shared.warning("TLocation の URL スキームを開けませんでした")
             }
+            if Thread.isMainThread {
+                completion?(success)
+            } else {
+                DispatchQueue.main.async { completion?(success) }
+            }
         }
         return true
         #else
         LogStore.shared.warning("このプラットフォームでは URL スキーム委譲を利用できません")
+        completion?(false)
         return false
         #endif
     }

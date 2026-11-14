@@ -26,7 +26,8 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
 - Sender は `bluetooth-peripheral` + `location`、Receiver は `bluetooth-central` +
   `location` の UIBackgroundModes を使う。Sender は送信中の位置情報セッションで、
   Receiver は注入 ON の間 `BackgroundKeepAlive`（低精度セッション）でバックグラウンド
-  継続を担保する（設定で無効化可）。
+  継続を担保する（注入 ON のまま画面を離れても維持。設定で無効化可。バッテリーとの
+  トレードオフあり）。
 
 ## 画面と実装の対応
 
