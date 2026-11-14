@@ -108,16 +108,19 @@ let package = Package(
         .target(
             name: "idevice",
             path: "Vendor/idevice",
-            // `idevice.h` and `module.modulemap` live directly in Vendor/idevice
-            // (same layout as TLocation's Xcode target, which finds the module
-            // through SWIFT_INCLUDE_PATHS).
-            publicHeadersPath: ".",
+            // `include/idevice.h` + `include/module.modulemap` are copied from
+            // TLocation's `TLocation/idevice/` directory (the same pair its
+            // Xcode target finds through SWIFT_INCLUDE_PATHS). SwiftPM's
+            // standard C-target layout puts public headers in `include/`.
+            publicHeadersPath: "include",
             cSettings: [
-                .headerSearchPath("."),
+                .headerSearchPath("include"),
             ],
             linkerSettings: [
                 // The static library is arm64/iOS only; never apply these flags
                 // when the host builds the package for macOS (swift test).
+                // `libidevice_ffi.a` itself stays at Vendor/idevice/ (fetched by
+                // scripts/fetch-vendor.sh).
                 .unsafeFlags(
                     ["-L\(vendorDirectory)", "-lidevice_ffi"],
                     .when(platforms: [.iOS])

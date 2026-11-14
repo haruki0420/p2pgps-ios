@@ -51,7 +51,8 @@ idevice
   https://github.com/jkcoxson/idevice
   License: MIT
   Copyright (C) jkcoxson and contributors.
-  - Vendor/idevice/idevice.h and Vendor/idevice/module.modulemap are copied
+  - Vendor/idevice/include/idevice.h and
+    Vendor/idevice/include/module.modulemap are copied
     verbatim from TLocation's `TLocation/idevice/` directory (which vendors
     them from idevice).
   - Vendor/idevice/libidevice_ffi.a is NOT committed; scripts/fetch-vendor.sh

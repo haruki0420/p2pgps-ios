@@ -62,8 +62,8 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         # The vendored idevice module: header + module map for `import idevice`,
         # and the static library fetched by scripts/fetch-vendor.sh.
-        SWIFT_INCLUDE_PATHS: "$(inherited) $(SRCROOT)/Vendor/idevice"
-        HEADER_SEARCH_PATHS: "$(inherited) $(SRCROOT)/Vendor/idevice"
+        SWIFT_INCLUDE_PATHS: "$(inherited) $(SRCROOT)/Vendor/idevice/include"
+        HEADER_SEARCH_PATHS: "$(inherited) $(SRCROOT)/Vendor/idevice/include"
         LIBRARY_SEARCH_PATHS: "$(inherited) $(SRCROOT)/Vendor/idevice"
         OTHER_LDFLAGS: "$(inherited) -L$(SRCROOT)/Vendor/idevice -lidevice_ffi"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
