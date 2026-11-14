@@ -142,7 +142,7 @@
     },
     {
       "id": "control-start-65535",
-      "description": "START interval_ms=65535（uint16 max。上限 60000 にクランプ）",
+      "description": "START interval_ms=65535（生値 uint16 max。上限 60000 にクランプ）",
       "command": {
         "opcode": "START",
         "interval_ms": 65535
