@@ -1,0 +1,15 @@
+# Keep shell scripts and source files LF so CI (macOS/Linux) never sees CRLF.
+* text=auto
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.swift text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.plist text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.modulemap text eol=lf
+LICENSE text eol=lf
+NOTICE text eol=lf
+.gitignore text eol=lf
