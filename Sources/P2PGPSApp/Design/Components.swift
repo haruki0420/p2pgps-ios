@@ -21,8 +21,10 @@ import P2PGPSBLE
 
 // MARK: - Status rail
 
-/// Connection LED: filled when connected, outlined when idle, pulsing while
-/// connecting/scanning (DESIGN.md "Status rail" / "Motion").
+/// Connection LED: filled when connected, outlined when idle. The state is also
+/// spelled out in text by `StatusRail`; colour is never the only signal
+/// (DESIGN.md "Status rail"). No pulsing: DESIGN.md "Motion" keeps the LED
+/// static so Reduce Motion and the Android implementation stay aligned.
 struct ConnectionLED: View {
     enum State {
         case connected
@@ -49,28 +51,12 @@ struct ConnectionLED: View {
 
     let state: State
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var pulse = false
-
     var body: some View {
         Circle()
             .fill(state.isFilled ? state.color : Color.clear)
             .overlay(Circle().stroke(state.color, lineWidth: state.isFilled ? 0 : 1.5))
             .frame(width: P2PSpacing.ledDiameter, height: P2PSpacing.ledDiameter)
-            .opacity(pulse ? 0.35 : 1)
-            .onAppear { updatePulse() }
-            .onChange(of: state) { _, _ in updatePulse() }
             .accessibilityHidden(true)
-    }
-
-    private func updatePulse() {
-        guard state == .waiting, !reduceMotion else {
-            pulse = false
-            return
-        }
-        withAnimation(.easeInOut(duration: P2PMotion.ledPulse).repeatForever(autoreverses: true)) {
-            pulse = true
-        }
     }
 }
 
