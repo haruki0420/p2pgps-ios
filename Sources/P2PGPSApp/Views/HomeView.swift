@@ -15,6 +15,7 @@
 import SwiftUI
 #if SWIFT_PACKAGE
 import P2PGPSCore
+import P2PGPSBLE
 #endif
 
 struct HomeView: View {

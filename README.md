@@ -102,6 +102,22 @@ open P2PGPS.xcodeproj
 
 `project.yml` は CI のリンク検証用に、SwiftPM の全ソースを単一モジュールとしてコンパイルします（TLocation の Xcode プロジェクトと同じ構成）。ソース側は `#if SWIFT_PACKAGE` で cross-module import を切り替えているため、両方のビルドで同じファイルがそのまま通ります。
 
+### Swift 6 と言語モード
+
+- ツールチェーンは **Swift 6**（`swift-tools-version: 6.0`）です。
+- `P2PGPSProtocol` / `P2PGPSCore` は **Swift 6 言語モード**（strict concurrency）でビルドします。値型中心で `Sendable` を明示しています。
+- `P2PGPSBLE` / `P2PGPSLocation` / `P2PGPSInjection` / `P2PGPSApp` は **Swift 5 言語モード**です。TLocation から移植したエンジン（静的ハンドル・`Thread`・`DispatchQueue`）を変更せずに保つための判断で、`Package.swift` の `swiftSettings: [.swiftLanguageMode(.v5)]` で指定しています。
+- XcodeGen の検証ビルドも Swift 5 言語モード（`SWIFT_VERSION: 5.0`）です。
+
+## デザイン
+
+UI の視覚世界・トークン・anti-slop ルールの正本はリポジトリルートの [`DESIGN.md`](DESIGN.md)（プロダクト事実は [`PRODUCT.md`](PRODUCT.md)）です。iOS 実装への落とし込みは [`docs/design.md`](docs/design.md) に記録しています。
+
+- 視覚世界は「測量標（benchmark）」。地図と座標が主役の計測器で、カードの山・グラデーション・影・絵文字アイコンは使いません。
+- 色は paper / surface / ink / line / pine / live / amber / danger のセマンティックトークン（Light/Dark 両対応、`Color` extension で実装）。
+- 座標は SF Mono（monospaced）の tabular 数字で画面上最も大きく表示。状態は色だけでなくアイコン + テキストで示します。
+- 実機・Simulator が無いため、レンダリング検証（Dynamic Type / Dark Mode / Reduce Motion）は未実施です。
+
 ## iPad（Receiver）のセットアップ
 
 位置注入には次の 4 つが必要です。詳細手順は [docs/receiver-setup.md](docs/receiver-setup.md) を参照してください。

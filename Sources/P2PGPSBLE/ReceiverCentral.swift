@@ -121,14 +121,16 @@ public final class ReceiverCentral: NSObject, ObservableObject {
     // MARK: - Init
 
     public override init() {
-        let defaults = UserDefaults.standard
-        self.defaults = defaults
-        self.autoReconnect = defaults.object(forKey: SettingsKey.autoReconnect) as? Bool ?? true
-        if let stored = defaults.string(forKey: SettingsKey.lastSenderIdentifier) {
-            self.lastSenderIdentifier = UUID(uuidString: stored)
-        }
-        self.lastSenderName = defaults.string(forKey: SettingsKey.lastSenderName)
+        self.defaults = UserDefaults.standard
         super.init()
+
+        let defaults = self.defaults
+        autoReconnect = defaults.object(forKey: SettingsKey.autoReconnect) as? Bool ?? true
+        if let stored = defaults.string(forKey: SettingsKey.lastSenderIdentifier) {
+            lastSenderIdentifier = UUID(uuidString: stored)
+        }
+        lastSenderName = defaults.string(forKey: SettingsKey.lastSenderName)
+
         _ = central // starts the manager and its delegate callbacks
     }
 

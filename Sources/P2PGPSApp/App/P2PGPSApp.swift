@@ -10,6 +10,10 @@
 //  attribute here provides the entry point. XcodeGen's app target compiles the
 //  same file directly, so both build paths share one entry point.
 //
+//  The type is named `P2PGPSiOSApp` rather than `P2PGPSApp` on purpose: a type
+//  with the same name as its enclosing module (the product/module is
+//  `P2PGPSApp`) makes module-qualified references ambiguous.
+//
 
 #if canImport(UIKit)
 import SwiftUI
@@ -18,7 +22,7 @@ import P2PGPSCore
 #endif
 
 @main
-struct P2PGPSApp: App {
+struct P2PGPSiOSApp: App {
     init() {
         LogStore.shared.info("P2P GPS を起動しました")
     }
