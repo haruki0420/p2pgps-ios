@@ -11,12 +11,18 @@
 //  `TLocation/Support/PairingFileStore.swift`), derived from StikDebug, AGPL-3.0.
 //  Copyright (C) Stephen Bove and the StikDebug / TLocation contributors.
 //
-//  The pairing file is a secret: it is stored in Application Support with
-//  0600 permissions, never logged, and never committed to the repository.
+//  The pairing file is a secret. The canonical copy lives in Application
+//  Support/Pairing with 0600 permissions, Data Protection (iOS), and the
+//  "exclude from backup" flag. Documents is only a transient import location:
+//  every migration path deletes the Documents copy afterwards, so the secret is
+//  never stored twice (review M3).
 //
 
 import Foundation
 import UniformTypeIdentifiers
+#if SWIFT_PACKAGE
+import P2PGPSCore
+#endif
 
 /// Stores the `.mobiledevicepairing` record used by the RSD tunnel.
 public enum PairingFileStore {
@@ -28,6 +34,7 @@ public enum PairingFileStore {
     ]
 
     private static let legacyFileName = "rp_pairing_file.plist"
+    private static let log = LogStore.shared
 
     /// Canonical location of the pairing file.
     public static var url: URL {
@@ -42,37 +49,45 @@ public enum PairingFileStore {
     /// Makes sure the canonical file exists (migrating legacy copies) and
     /// returns its URL. The file may still not exist if the user never
     /// imported one.
+    ///
+    /// Any Documents copy is deleted after it has been migrated, and the
+    /// canonical file is re-protected on every call.
     @discardableResult
     public static func prepareURL(fileManager: FileManager = .default) -> URL {
         let destination = url
         try? fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        protectDirectory(fileManager: fileManager)
 
         if let documentURL = documentSourceURL(fileManager: fileManager) {
             if !fileManager.fileExists(atPath: destination.path) ||
                 !fileManager.contentsEqual(atPath: documentURL.path, andPath: destination.path) {
                 try? replaceItem(at: destination, with: documentURL, fileManager: fileManager)
-                protectPairingFile(at: destination, fileManager: fileManager)
             }
+            protectPairingFile(at: destination, fileManager: fileManager)
+            // The Documents copy is a transient import location only.
+            removeDocumentsCopies(fileManager: fileManager)
             return destination
         }
 
         if !fileManager.fileExists(atPath: destination.path) {
             migrateLegacyCopy(to: destination, fileManager: fileManager)
         }
+        protectPairingFile(at: destination, fileManager: fileManager)
         return destination
     }
 
     /// Replaces the stored pairing file with `sourceURL`.
+    ///
+    /// The file is copied straight into Application Support (never left in
+    /// Documents), protected with 0600 / Data Protection / no-backup, and any
+    /// legacy Documents copies are removed.
     public static func replace(with sourceURL: URL, fileManager: FileManager = .default) throws {
         try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        protectDirectory(fileManager: fileManager)
 
-        let documentsDestination = documentsURL
-        if sourceURL.standardizedFileURL != documentsDestination.standardizedFileURL {
-            try replaceItem(at: documentsDestination, with: sourceURL, fileManager: fileManager)
-        }
-
-        try replaceItem(at: url, with: documentsDestination, fileManager: fileManager)
+        try replaceItem(at: url, with: sourceURL, fileManager: fileManager)
         protectPairingFile(at: url, fileManager: fileManager)
+        removeDocumentsCopies(fileManager: fileManager)
     }
 
     /// Imports a pairing file chosen with the system document picker.
@@ -98,7 +113,10 @@ public enum PairingFileStore {
             try fileManager.removeItem(at: destination)
         }
         removeLegacyCopies(fileManager: fileManager)
+        removeDocumentsCopies(fileManager: fileManager)
     }
+
+    // MARK: - Locations
 
     private static var directoryURL: URL {
         FileManager.default
@@ -117,6 +135,8 @@ public enum PairingFileStore {
     private static var documentsURL: URL {
         URL.documentsDirectory.appendingPathComponent(fileName)
     }
+
+    // MARK: - Migration
 
     private static func documentSourceURL(fileManager: FileManager) -> URL? {
         [documentsURL, URL.documentsDirectory.appendingPathComponent(legacyFileName)]
@@ -143,6 +163,8 @@ public enum PairingFileStore {
         }
     }
 
+    // MARK: - File operations
+
     private static func replaceItem(at destination: URL, with source: URL, fileManager: FileManager) throws {
         let temporary = destination
             .deletingLastPathComponent()
@@ -164,7 +186,63 @@ public enum PairingFileStore {
         }
     }
 
+    /// Deletes the Documents copies left by older builds / imports.
+    private static func removeDocumentsCopies(fileManager: FileManager) {
+        for documentsCopy in [documentsURL, URL.documentsDirectory.appendingPathComponent(legacyFileName)] {
+            guard fileManager.fileExists(atPath: documentsCopy.path) else { continue }
+            do {
+                try fileManager.removeItem(at: documentsCopy)
+                log.info("Documents の pairing file コピーを削除しました")
+            } catch {
+                log.error("Documents の pairing file コピーを削除できませんでした: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    // MARK: - Protection
+
+    /// 0600 + Data Protection (iOS) + excluded from backup.
     private static func protectPairingFile(at url: URL, fileManager: FileManager) {
-        try? fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        guard fileManager.fileExists(atPath: url.path) else { return }
+
+        do {
+            try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        } catch {
+            log.error("pairing file のパーミッションを 0600 に設定できませんでした: \(error.localizedDescription)")
+        }
+
+        #if os(iOS)
+        do {
+            try fileManager.setAttributes(
+                [.protectionKey: FileProtectionType.complete],
+                ofItemAtPath: url.path
+            )
+        } catch {
+            log.error("pairing file の Data Protection を設定できませんでした: \(error.localizedDescription)")
+        }
+        #endif
+
+        excludeFromBackup(url, fileManager: fileManager)
+    }
+
+    private static func protectDirectory(fileManager: FileManager) {
+        guard fileManager.fileExists(atPath: directoryURL.path) else { return }
+        do {
+            try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directoryURL.path)
+        } catch {
+            log.error("pairing ディレクトリのパーミッションを設定できませんでした: \(error.localizedDescription)")
+        }
+        excludeFromBackup(directoryURL, fileManager: fileManager)
+    }
+
+    private static func excludeFromBackup(_ url: URL, fileManager: FileManager) {
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        var mutableURL = url
+        do {
+            try mutableURL.setResourceValues(values)
+        } catch {
+            log.error("バックアップ除外フラグを設定できませんでした: \(error.localizedDescription)")
+        }
     }
 }

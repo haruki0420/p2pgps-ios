@@ -85,6 +85,8 @@ struct StatusRail: View {
     let signalQuality: SignalQuality
     let accuracyText: String
     let statusText: String?
+    /// "最終受信" on the Receiver, "最終送信" on the Sender (review L-19).
+    var lastEventLabel: String = "最終受信"
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -103,7 +105,7 @@ struct StatusRail: View {
                     }
                 }
                 Spacer(minLength: 8)
-                Text("最終受信 \(P2PFormat.relativeAge(lastReceivedAt, now: context.date))")
+                Text("\(lastEventLabel) \(P2PFormat.relativeAge(lastReceivedAt, now: context.date))")
                     .font(P2PFont.metric)
                     .foregroundStyle(P2PColor.inkSecondary)
                     .lineLimit(1)
@@ -169,7 +171,9 @@ struct CoordinateRow: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(label) \(spokenValue)")
+        // `spokenValue` already carries the direction ("北緯 …" / "東経 …"),
+        // so the visual label is not repeated (review M14).
+        .accessibilityLabel(spokenValue)
     }
 }
 

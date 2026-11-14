@@ -11,9 +11,13 @@
 //  `TLocation/Services/TunnelManager.swift`), derived from StikDebug, AGPL-3.0.
 //  Copyright (C) the StikDebug / TLocation contributors.
 //
-//  Changes from upstream: alert presentation and localization were replaced with
-//  a published `lastError` (two-sentence recovery text) that the Settings and
-//  Diagnostics screens render inline.
+//  Changes from upstream (review M4 / L-8 / L-9):
+//   * tunnel creation runs on the single serial `LocationSimulationCommandQueue`
+//     instead of a global queue, so it can never race the location simulation's
+//     own RSD handshake against the single-occupancy endpoint;
+//   * `markDisconnected()` invalidates the cached FFI handles so the next
+//     `ensureTunnel()` really retries instead of reusing a stale tunnel;
+//   * alert presentation was replaced with a published `lastError`.
 //
 
 import Combine
@@ -30,18 +34,27 @@ public final class TunnelManager: ObservableObject {
     @Published public private(set) var isStarting = false
     @Published public private(set) var lastError: String?
 
+    private let queue = LocationSimulationCommandQueue.shared
     private let log = LogStore.shared
 
     private init() {}
 
-    /// Marks the tunnel as gone (e.g. after the VPN dropped).
+    /// Marks the tunnel as gone (e.g. after the VPN dropped or a failed start)
+    /// and drops the cached FFI handles so the next start retries.
     public func markDisconnected() {
+        queue.async {
+            JITEnableContext.shared.invalidateTunnel()
+        }
         runOnMain {
             self.isConnected = false
         }
     }
 
     /// Starts the tunnel if a pairing file exists. Safe to call repeatedly.
+    ///
+    /// The FFI handshake is serialised on `LocationSimulationCommandQueue`;
+    /// only the cheap pairing-file existence check and the published-state
+    /// updates happen on the main thread.
     public func start() {
         guard Thread.isMainThread else {
             DispatchQueue.main.async { self.start() }
@@ -61,7 +74,7 @@ public final class TunnelManager: ObservableObject {
         isStarting = true
         lastError = nil
 
-        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+        queue.async { [weak self] in
             let result: Result<Void, NSError>
             do {
                 try JITEnableContext.shared.startTunnel()
@@ -89,6 +102,10 @@ public final class TunnelManager: ObservableObject {
             isConnected = false
             lastError = Self.recoveryMessage(for: error)
             log.error("トンネル接続に失敗しました: \(error.localizedDescription) (code \(error.code))")
+            // Drop any stale handles so the next attempt really reconnects.
+            queue.async {
+                JITEnableContext.shared.invalidateTunnel()
+            }
         }
     }
 
@@ -96,7 +113,7 @@ public final class TunnelManager: ObservableObject {
         let trustcachePath = URL.documentsDirectory.appendingPathComponent("DDI/Image.dmg.trustcache").path
         guard FileManager.default.fileExists(atPath: trustcachePath),
               !MountingProgress.shared.isDeveloperDiskImageMounted,
-              MountingProgress.shared.mountingThread == nil else {
+              !MountingProgress.shared.isMounting else {
             return
         }
         MountingProgress.shared.mountIfNeeded()
@@ -153,7 +170,7 @@ public func startTunnelAfterPendingLocationCommands() {
     }
 }
 
-/// Marks the tunnel as disconnected.
+/// Marks the tunnel as disconnected and invalidates the cached FFI handles.
 public func markTunnelDisconnected() {
     TunnelManager.shared.markDisconnected()
 }

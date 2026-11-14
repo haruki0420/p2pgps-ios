@@ -1,3 +1,6 @@
+// Vendored from TLocation's `TLocation/idevice/module.modulemap`, which vendors
+// the idevice FFI headers from https://github.com/jkcoxson/idevice (MIT).
+// See Vendor/idevice/LICENSE and NOTICE.
 module idevice [system] {
   header "idevice.h"
   export *

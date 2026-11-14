@@ -109,9 +109,19 @@ enum P2PSpacing {
 // MARK: - Formatters
 
 /// Shared number formatting so every screen renders values identically.
+///
+/// All `String(format:)` calls use `en_US_POSIX` so a device locale with a
+/// comma decimal separator cannot produce "35,681236" in the UI or in a URL
+/// (review L-18).
 enum P2PFormat {
+    private static let posixLocale = Locale(identifier: "en_US_POSIX")
+
+    private static func format(_ format: String, _ arguments: CVarArg...) -> String {
+        String(format: format, locale: posixLocale, arguments: arguments)
+    }
+
     static func coordinate(_ value: Double, decimalPlaces: Int = 7) -> String {
-        String(format: "%.\(decimalPlaces)f", value)
+        format("%.\(decimalPlaces)f", value)
     }
 
     /// "0.8 秒前" / "12 秒前" / "3 分前" — relative receive age.
@@ -119,7 +129,7 @@ enum P2PFormat {
         guard let date else { return "—" }
         let seconds = max(0, now.timeIntervalSince(date))
         if seconds < 10 {
-            return String(format: "%.1f 秒前", seconds)
+            return format("%.1f 秒前", seconds)
         }
         if seconds < 60 {
             return "\(Int(seconds)) 秒前"
@@ -130,33 +140,41 @@ enum P2PFormat {
     /// "±5 m" / "±—"
     static func accuracy(_ meters: Double?) -> String {
         guard let meters, meters >= 0 else { return "±—" }
-        return String(format: "±%.0f m", meters)
+        return format("±%.0f m", meters)
     }
 
     /// "3 m" / "—"
     static func altitude(_ meters: Double?) -> String {
         guard let meters else { return "—" }
-        return String(format: "%.0f m", meters)
+        return format("%.0f m", meters)
     }
 
     /// "0.0 m/s" / "—"
     static func speed(_ metersPerSecond: Double?) -> String {
         guard let metersPerSecond else { return "—" }
-        return String(format: "%.1f m/s", metersPerSecond)
+        return format("%.1f m/s", metersPerSecond)
     }
 
     /// "1.0 秒" interval text.
     static func interval(_ milliseconds: UInt16) -> String {
-        String(format: "%.1f 秒", Double(milliseconds) / 1000.0)
+        format("%.1f 秒", Double(milliseconds) / 1000.0)
+    }
+
+    /// VoiceOver latitude: "北緯 35.681236" / "南緯 35.681236".
+    static func spokenLatitude(_ latitude: Double, decimalPlaces: Int = 6) -> String {
+        let direction = latitude >= 0 ? "北緯" : "南緯"
+        return "\(direction) \(format("%.\(decimalPlaces)f", abs(latitude)))"
+    }
+
+    /// VoiceOver longitude: "東経 139.767125" / "西経 139.767125".
+    static func spokenLongitude(_ longitude: Double, decimalPlaces: Int = 6) -> String {
+        let direction = longitude >= 0 ? "東経" : "西経"
+        return "\(direction) \(format("%.\(decimalPlaces)f", abs(longitude)))"
     }
 
     /// VoiceOver coordinate sentence: "北緯 35.681236、東経 139.767125".
     static func spokenCoordinate(latitude: Double, longitude: Double, decimalPlaces: Int = 6) -> String {
-        let northSouth = latitude >= 0 ? "北緯" : "南緯"
-        let eastWest = longitude >= 0 ? "東経" : "西経"
-        let lat = String(format: "%.\(decimalPlaces)f", abs(latitude))
-        let lon = String(format: "%.\(decimalPlaces)f", abs(longitude))
-        return "\(northSouth) \(lat)、\(eastWest) \(lon)"
+        "\(spokenLatitude(latitude, decimalPlaces: decimalPlaces))、\(spokenLongitude(longitude, decimalPlaces: decimalPlaces))"
     }
 }
 

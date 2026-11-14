@@ -238,6 +238,25 @@ final class JITEnableContext {
         handshake = newHandshake
     }
 
+    /// Frees the cached tunnel handles so the next `ensureTunnel()` reconnects.
+    ///
+    /// Must be called on `LocationSimulationCommandQueue`, the same serial
+    /// context as every other FFI call. Used by `TunnelManager.markDisconnected`
+    /// so a failed/stale tunnel is not reused forever (review L-9).
+    func invalidateTunnel() {
+        tunnelLock.lock()
+        if let handshake {
+            rsd_handshake_free(handshake)
+            self.handshake = nil
+        }
+        if let adapter {
+            adapter_free(adapter)
+            self.adapter = nil
+        }
+        lastTunnelError = nil
+        tunnelLock.unlock()
+    }
+
     func ensureTunnel() throws {
         if adapter == nil || handshake == nil {
             try startTunnel()

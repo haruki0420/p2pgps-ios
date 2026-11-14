@@ -13,6 +13,10 @@
 //  continues, spec §5), and losing the last subscriber returns the sender to
 //  Idle (spec §7).
 //
+//  Review M11: settings changes (interval / Extended) are applied live through
+//  Combine. Review L-1: RESET keeps streaming. Review L-25: battery is polled at
+//  most every 5 seconds.
+//
 
 #if canImport(UIKit)
 import Combine
@@ -38,6 +42,7 @@ final class SenderController: ObservableObject {
     @Published private(set) var subscriberCount = 0
     @Published private(set) var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published private(set) var bleState: SenderPeripheral.State = .idle
+    @Published private(set) var lastSentAt: Date?
     @Published var errorMessage: String?
 
     /// Stable advertised name (`P2PGPS-IOS-XXXX`).
@@ -52,10 +57,13 @@ final class SenderController: ObservableObject {
     // MARK: - Private state
 
     private var sequence: UInt16 = 0
-    private var lastSentAt = Date.distantPast
+    private var lastSentAtInternal = Date.distantPast
     private var lastFixAvailability = false
     private var heartbeatTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
+    private var batteryPercentage: UInt8?
+    private var batteryIsCharging = false
+    private var batteryUpdatedAt = Date.distantPast
     private let log = LogStore.shared
 
     // MARK: - Init
@@ -121,6 +129,30 @@ final class SenderController: ObservableObject {
                 self?.bleState = state
             }
             .store(in: &cancellables)
+
+        // Settings changed from the Settings screen apply live (review M11).
+        settings.$senderIntervalMilliseconds
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] interval in
+                guard let self, interval != self.intervalMilliseconds else { return }
+                self.intervalMilliseconds = interval
+                self.publishStatus(state: self.isStreaming ? .streaming : .idle)
+            }
+            .store(in: &cancellables)
+
+        settings.$extendedLocationEnabled
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] enabled in
+                guard let self, enabled != self.extendedEnabled else { return }
+                self.extendedEnabled = enabled
+                self.publishStatus(state: self.isStreaming ? .streaming : .idle)
+                if enabled, let fix = self.latestFix {
+                    self.peripheral.update(extendedPacket: ExtendedLocationPacket(fix: fix))
+                }
+            }
+            .store(in: &cancellables)
     }
 
     deinit {
@@ -131,15 +163,14 @@ final class SenderController: ObservableObject {
 
     func onAppear() {
         location.refreshAuthorization()
-        if settings.keepAliveLocationUpdates {
-            // The first fix also primes the readout before the user starts.
-            location.requestOneShot()
-        }
+        // Prime the readout before the user starts; this is not a keep-alive.
+        location.requestOneShot()
     }
 
     /// Starts advertising and streaming.
     func startSending() {
         errorMessage = nil
+        status.lastError = .none
         location.start()
         peripheral.startAdvertising(localName: localName)
         isStreaming = true
@@ -153,6 +184,7 @@ final class SenderController: ObservableObject {
 
     /// Stops streaming and advertising (the local stop button).
     func stopSending() {
+        status.lastError = .none
         isStreaming = false
         location.stop()
         peripheral.stopAdvertising()
@@ -190,7 +222,7 @@ final class SenderController: ObservableObject {
 
     private func maybeSend(_ fix: GPSFix) {
         let interval = Double(intervalMilliseconds) / 1000.0
-        guard Date().timeIntervalSince(lastSentAt) >= interval else { return }
+        guard Date().timeIntervalSince(lastSentAtInternal) >= interval else { return }
         send(fix)
     }
 
@@ -201,10 +233,12 @@ final class SenderController: ObservableObject {
             return
         }
 
+        refreshBatteryIfNeeded()
+
         sequence &+= 1
         var extraFlags: LocationFlags = []
-        if DeviceBattery.isCharging { extraFlags.insert(.charging) }
-        if let battery = DeviceBattery.percentage, battery < 20 { extraFlags.insert(.lowBattery) }
+        if batteryIsCharging { extraFlags.insert(.charging) }
+        if let battery = batteryPercentage, battery < 20 { extraFlags.insert(.lowBattery) }
         if let speed = fix.speedMetersPerSecond, speed >= 0.5 { extraFlags.insert(.moving) }
 
         let packet = LocationPacket(fix: fix, sequence: sequence, extraFlags: extraFlags)
@@ -212,13 +246,26 @@ final class SenderController: ObservableObject {
         if extendedEnabled {
             peripheral.update(extendedPacket: ExtendedLocationPacket(fix: fix))
         }
-        lastSentAt = Date()
+        lastSentAtInternal = Date()
+        lastSentAt = lastSentAtInternal
+    }
+
+    /// Battery monitoring is expensive enough to be worth throttling
+    /// (review L-25).
+    private func refreshBatteryIfNeeded() {
+        let now = Date()
+        guard now.timeIntervalSince(batteryUpdatedAt) >= 5 else { return }
+        batteryUpdatedAt = now
+        batteryPercentage = DeviceBattery.percentage
+        batteryIsCharging = DeviceBattery.isCharging
     }
 
     // MARK: - Control characteristic
 
     private func handle(_ command: ControlCommand) {
         log.info("Control コマンドを適用: \(command)")
+        // A successfully decoded command clears the previous error (review L-2).
+        status.lastError = .none
 
         switch command {
         case .start:
@@ -262,13 +309,14 @@ final class SenderController: ObservableObject {
             }
 
         case .reset:
+            // Spec §5: RESET restores defaults (interval 1000, extended off,
+            // sequence 0) but does not stop streaming (review L-1).
             intervalMilliseconds = ControlCommand.defaultIntervalMilliseconds
             settings.senderIntervalMilliseconds = intervalMilliseconds
             extendedEnabled = false
+            settings.extendedLocationEnabled = false
             sequence = 0
-            isStreaming = false
-            publishStatus(state: .idle)
-            stopHeartbeat()
+            publishStatus(state: isStreaming ? .streaming : .idle)
         }
     }
 
@@ -301,12 +349,12 @@ final class SenderController: ObservableObject {
         var flags: SenderStatus.Flags = []
         if extendedEnabled { flags.insert(.extendedEnabled) }
         if latestFix?.isUsable == true { flags.insert(.fixAvailable) }
-        if DeviceBattery.isCharging { flags.insert(.charging) }
-        if let battery = DeviceBattery.percentage, battery < 20 { flags.insert(.lowBattery) }
+        if batteryIsCharging { flags.insert(.charging) }
+        if let battery = batteryPercentage, battery < 20 { flags.insert(.lowBattery) }
         return SenderStatus(
             state: state,
             intervalMilliseconds: intervalMilliseconds,
-            batteryPercentage: DeviceBattery.percentage ?? SenderStatus.unknownBattery,
+            batteryPercentage: batteryPercentage ?? SenderStatus.unknownBattery,
             flags: flags,
             lastError: status.lastError
         )
@@ -349,6 +397,11 @@ final class SenderController: ObservableObject {
             return "停止中（アドバタイズ中）"
         }
         return "停止中"
+    }
+
+    /// Whether the BLE layer reported a problem (review L-20).
+    var hasPeripheralError: Bool {
+        peripheral.lastError != nil
     }
 }
 #endif

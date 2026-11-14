@@ -80,10 +80,15 @@ struct HomeView: View {
                 }
                 .padding(.top, 28)
 
-                Text("v1.0.0 · AGPL-3.0 · 座標は端末外に送りません")
-                    .font(P2PFont.caption)
-                    .foregroundStyle(P2PColor.inkSecondary)
-                    .padding(.top, 8)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("座標は端末外に送りません")
+                        .font(P2PFont.caption)
+                        .foregroundStyle(P2PColor.inkSecondary)
+                    Text("v1.0.0 / AGPL-3.0")
+                        .font(P2PFont.caption)
+                        .foregroundStyle(P2PColor.inkSecondary)
+                }
+                .padding(.top, 8)
             }
             .padding(P2PSpacing.gutter)
             .frame(maxWidth: 560, alignment: .leading)

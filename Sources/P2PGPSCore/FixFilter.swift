@@ -11,6 +11,12 @@
 //  deterministic (no Kalman filter): the goal is to drop obviously wrong fixes
 //  and to keep the marker from jittering, not to reconstruct a trajectory.
 //
+//  Stale timestamps are deliberately NOT rejected here: spec §3.3-7 says a
+//  timestamp more than ±24 h from now is a *display warning*, and whether to
+//  inject is up to the user setting. The UI uses `GPSFix.isStale(now:)` for the
+//  warning (see ReceiverView), so a sender with a mis-set clock still shows and
+//  can still be injected.
+//
 
 import Foundation
 #if SWIFT_PACKAGE
@@ -27,8 +33,6 @@ public enum FixRejectionReason: Equatable, Sendable {
     case implausibleJump(distanceMeters: Double, timeInterval: TimeInterval)
     /// The fix is too close to the previous one to be worth updating.
     case tooClose(distanceMeters: Double)
-    /// The sender's clock is more than 24 hours away from ours.
-    case stale(age: TimeInterval)
 }
 
 /// The outcome of filtering one fix.
@@ -55,21 +59,17 @@ public struct FixFilter: Sendable {
         public var smoothingFactor: Double
         /// Reject fixes closer than this to the previous one (metres).
         public var minimumDistanceMeters: Double
-        /// Reject fixes whose timestamp is more than this far from now.
-        public var maximumAge: TimeInterval
 
         public init(
             maximumAccuracyMeters: Double = 200,
             maximumSpeedMetersPerSecond: Double = 120,
             smoothingFactor: Double = 0.5,
-            minimumDistanceMeters: Double = 0,
-            maximumAge: TimeInterval = 24 * 60 * 60
+            minimumDistanceMeters: Double = 0
         ) {
             self.maximumAccuracyMeters = maximumAccuracyMeters
             self.maximumSpeedMetersPerSecond = maximumSpeedMetersPerSecond
             self.smoothingFactor = smoothingFactor
             self.minimumDistanceMeters = minimumDistanceMeters
-            self.maximumAge = maximumAge
         }
     }
 
@@ -85,7 +85,9 @@ public struct FixFilter: Sendable {
     }
 
     /// Filters `fix` against the previous accepted fix.
-    public mutating func process(_ fix: GPSFix, now: Date = Date()) -> FixFilterDecision {
+    ///
+    /// - Note: A stale timestamp (spec §3.3-7) is not a rejection reason.
+    public mutating func process(_ fix: GPSFix) -> FixFilterDecision {
         guard fix.isUsable else {
             return reject(.invalidCoordinate)
         }
@@ -93,11 +95,6 @@ public struct FixFilter: Sendable {
         if fix.horizontalAccuracyMeters >= 0,
            fix.horizontalAccuracyMeters > configuration.maximumAccuracyMeters {
             return reject(.poorAccuracy(accuracyMeters: fix.horizontalAccuracyMeters))
-        }
-
-        let age = abs(now.timeIntervalSince(fix.timestamp))
-        if age > configuration.maximumAge {
-            return reject(.stale(age: age))
         }
 
         guard let previous = lastAccepted else {

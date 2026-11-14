@@ -15,26 +15,27 @@ iPhone（または Android）で取得した GPS 位置を **BLE GATT** で iPad
 
 1. **プロトコル v1 の厳密な実装**
    - 128-bit UUID、20 bytes Location Packet、8 bytes Extended Location、Control / Status を仕様どおりに encode / decode。
-   - 受信側の検証（長さ・バージョン・予約ビット・座標範囲・Null Island・sequence 巻き戻り・stale）を実装。
+   - 受信側の検証（長さ・バージョン・予約ビット・座標範囲・Null Island・sequence 巻き戻り）を実装。stale（±24 時間超）は破棄せず表示側の警告のみ（仕様 §3.3-7）。
    - 仕様 §10 のテストベクタを XCTest で検証（macOS で `swift test`）。`p2pgps-protocol/tests/vectors/*.json` の手動ミラーも読み込み、共有ベクタで encode / decode / validate を検証。
 2. **Receiver（iPad）**
-   - ステータスレール（接続 LED・送信元名・最終受信・電波・精度）。
+   - ステータスレール（接続 LED・送信元名・最終受信・実測 RSSI の電波表示・精度）。
    - フルブリード地図にクロスヘア + レンジリング、軌跡はパイン色のライン。
    - リードアウトプレートに緯度・経度（等幅・タブラー数字）と標高 / 精度 / 速度 / 更新。
    - 52pt の「位置情報を反映」トグル。注入中は上部にライブバナー（送信元・座標・停止）。
-   - 自動再接続（許可した送信元のみ）、送信元一覧からの手動接続。
+   - 自動再接続（許可した送信元のみ。ユーザーが切断した場合は再接続しない）、送信元一覧からの手動接続。
+   - 注入 ON の間は `BackgroundKeepAlive` でバックグラウンドでも 5 秒再送を維持。
 3. **Sender（iPhone）**
    - 現在地・精度・fix 品質、送信状態、BLE の 3 状態（アドバタイズ / 購読 / 送信）表示。
-   - 52pt の「送信を開始 / 停止」。バックグラウンド維持の説明。
-   - Control（START / STOP / SET_INTERVAL / REQUEST_FIX / SET_EXTENDED / RESET）に応答し、Status を notify。
+   - 52pt の「送信を開始 / 停止」。送信中は位置情報セッションでバックグラウンド維持。
+   - Control（START / STOP / SET_INTERVAL / REQUEST_FIX / SET_EXTENDED / RESET）に応答し、Status を notify。RESET はストリーミングを維持したまま既定値に戻す。
 4. **位置注入（TLocation 移植）**
-   - pairing file のインポート（Files ピッカー）、`PairingFileStore` に 0600 で保存。
-   - Developer Disk Image のダウンロード / 再取得 / マウント（`image_mounter_mount_personalized_with_callback_rsd`）。
-   - LocalDevVPN 経由の RSD トンネル（`tunnel_create_rppairing` → `remote_server_connect_rsd` → `location_simulation_new/set/clear`）。
+   - pairing file のインポート（Files ピッカー）。Application Support の `Pairing/` に 0600・Data Protection・バックアップ除外で保存し、Documents のコピーは削除。
+   - Developer Disk Image のダウンロード / 再取得 / マウント（`image_mounter_mount_personalized_with_callback_rsd`）。取得元は固定コミット + SHA-256 検証。
+   - LocalDevVPN 経由の RSD トンネル（`tunnel_create_rppairing` → `remote_server_connect_rsd` → `location_simulation_new/set/clear`）。フォアグラウンド復帰時はセッション終了を待ってトンネルを再構築。
    - 5 秒ごとの再送でシミュレーションを維持。停止時は `clear`。
-   - 埋め込みエンジンが使えない場合の `tlocation://` URL スキーム委譲モード。
+   - 埋め込みエンジンが使えない場合の `tlocation://` URL スキーム委譲モード（TLocation の有無を確認し、1 秒に 1 回へ間引き）。
 5. **設定 / 診断**
-   - Settings: pairing file、DDI、LocalDevVPN への導線、ターゲット IP（既定 `10.7.0.1`）、自動再接続、送信間隔、Extended、ログ桁数。
+   - Settings: pairing file、DDI、LocalDevVPN への導線、ターゲット IP（既定 `10.7.0.1`）、自動再接続、送信間隔、Extended、バックグラウンド維持（受信側）、ログ桁数。
    - Diagnostics: 受信パケット hex、Status / Extended hex、FFI セッション状態、トンネル / DDI 状態、メモリ内ログの共有。
 
 ## ディレクトリ構成
@@ -46,7 +47,7 @@ p2pgps-ios/
 ├── project.yml                  # XcodeGen（CI の Xcode リンク検証用）
 ├── PRODUCT.md / DESIGN.md       # 正本はリポジトリルートの共通版。ここは iOS 実装メモ
 ├── Resources/                   # アプリアイコン（PNG）
-├── Vendor/idevice/              # include/ に idevice.h + module.modulemap（MIT）。.a は fetch スクリプトで取得
+├── Vendor/idevice/              # include/ に idevice.h + module.modulemap（MIT）。LICENSE 同梱。.a は fetch スクリプトで取得
 ├── scripts/
 │   ├── fetch-vendor.sh          # libidevice_ffi.a の取得 + SHA-256 検証（macOS/Linux/WSL）
 │   └── fetch-vendor.ps1         # 同（Windows PowerShell）
@@ -114,7 +115,8 @@ open P2PGPS.xcodeproj
 
 - ツールチェーンは **Swift 6**（`swift-tools-version: 6.0`）です。
 - `P2PGPSProtocol` / `P2PGPSCore` は **Swift 6 言語モード**（strict concurrency）でビルドします。値型中心で `Sendable` を明示しています。
-- `P2PGPSBLE` / `P2PGPSLocation` / `P2PGPSInjection` / `P2PGPSApp` は **Swift 5 言語モード**です。TLocation から移植したエンジン（静的ハンドル・`Thread`・`DispatchQueue`）を変更せずに保つための判断で、`Package.swift` の `swiftSettings: [.swiftLanguageMode(.v5)]` で指定しています。
+- `P2PGPSBLE` / `P2PGPSLocation` / `P2PGPSInjection` / `P2PGPSApp` は **Swift 5 言語モード**です。TLocation から移植したエンジン（静的ハンドル・`DispatchQueue`）を変更せずに保つための判断で、`Package.swift` の `swiftSettings: [.swiftLanguageMode(.v5)]` で指定しています。
+- テストターゲットも **Swift 5 言語モード**です（XCTest と SwiftPM の `Bundle.module` アクセサが strict concurrency 前提でないため）。テスト対象の Protocol / Core は Swift 6 のままです。
 - XcodeGen の検証ビルドも Swift 5 言語モード（`SWIFT_VERSION: 5.0`）です。
 
 ## デザイン
@@ -174,10 +176,12 @@ UI の視覚世界・トークン・anti-slop ルールの正本はリポジト�
 - 位置注入は Apple の Developer Disk Image・LocalDevVPN・pairing file を必要とし、TLocation と同一の idevice FFI に固定しています。iOS の更新で壊れる可能性があります。
 - v1 は **同時 1 台接続**、ボンディング / 認証なし（Just Works 相当）。近距離の第三者が偽の位置を送れるため、自動接続は許可した送信元のみ、注入は既定 OFF、注入中は常時バナー表示としています。
 - 実機での UI 確認（Dynamic Type / Dark Mode / Reduce Motion）は未実施です。
+- iOS のバックグラウンドではアドバタイズのローカルネームが落ちることがあり、その間は受信側の名前フィルタで送信元が見えにくくなります（接続済みなら影響なし）。
 - `libidevice_ffi.a` は arm64 iOS 専用です。macOS ネイティブビルドではリンクしません（`swift test` 用にリンカフラグを iOS のみに限定）。
+- `remote_server` ハンドルの所有権（`location_simulation_new` が所有するか）は上流でも未解決です。現在は上流どおり二重 free を避ける実装で、リークの有無は実機でセッションを開閉して確認が必要です。
 
 ## ライセンスと帰属
 
 - 本リポジトリ: **AGPL-3.0**（[LICENSE](LICENSE)）
-- 上流: StikDebug / TLocation（AGPL-3.0）、idevice（MIT）、xtool（MIT）。詳細は [NOTICE](NOTICE)。
+- 上流: StikDebug / TLocation（AGPL-3.0）、idevice（MIT、全文は [Vendor/idevice/LICENSE](Vendor/idevice/LICENSE)）、libplist（LGPL-2.1、`idevice.h` 内の宣言のみ）、xtool（MIT）。詳細は [NOTICE](NOTICE)。
 - プロトコル仕様と Python リファレンス実装（`p2pgps-protocol`）は MIT です。

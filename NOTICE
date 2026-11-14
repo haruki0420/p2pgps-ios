@@ -50,14 +50,32 @@ TLocation
 idevice
   https://github.com/jkcoxson/idevice
   License: MIT
-  Copyright (C) jkcoxson and contributors.
+  Copyright 2026 Jackson Coxson and contributors.
+  Full MIT text: Vendor/idevice/LICENSE.
   - Vendor/idevice/include/idevice.h and
     Vendor/idevice/include/module.modulemap are copied
     verbatim from TLocation's `TLocation/idevice/` directory (which vendors
     them from idevice).
+  - Vendor/idevice/idevice_anchor.c is an original translation unit added so
+    SwiftPM accepts the header-only C target; it is MIT-licensed as declared in
+    its SPDX header.
   - Vendor/idevice/libidevice_ffi.a is NOT committed; scripts/fetch-vendor.sh
     downloads it from the pinned TLocation commit and verifies
     SHA-256 6524066D54EF23E00D46445C04DFC694E180196D54119D718F68434FA225BE35.
+
+libplist (LGPL-2.1) — embedded declarations in idevice.h
+  https://github.com/libimobiledevice/libplist
+  License: LGPL-2.1-or-later
+  Copyright (C) 2008-2009 Jonathan Beck, 2012-2023 Nikias Bassen, and the
+  libplist contributors.
+  `Vendor/idevice/include/idevice.h` embeds the C declarations of libplist
+  (the `plist_*` API) because the idevice FFI's pairing-file helpers use them.
+  Only declarations are vendored; libplist itself is not bundled — it is
+  compiled into `libidevice_ffi.a`, which is downloaded at build time and
+  linked dynamically/static per the upstream artifact. The LGPL-2.1 text is at
+  <https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html>; users who need to
+  relink against a modified libplist can replace `libidevice_ffi.a` via
+  `scripts/fetch-vendor.sh`'s override path.
 
 xtool
   https://github.com/xtool-org/xtool
@@ -68,8 +86,11 @@ xtool
 doronz88/DeveloperDiskImage
   https://github.com/doronz88/DeveloperDiskImage
   The app downloads Image.dmg / Image.dmg.trustcache / BuildManifest.plist from
-  this repository at runtime. The files are not redistributed by this
-  repository; their use is subject to the upstream project's terms.
+  this repository at runtime. The download URLs are pinned to commit
+  a1020f81b6429f5ce40408cbe21c690512b613b5 and every file is verified against
+  a SHA-256 digest before use (mismatch → deleted + error). The files are not
+  redistributed by this repository; their use is subject to the upstream
+  project's terms.
 
 LocalDevVPN
   https://apps.apple.com/us/app/localdevvpn/id6755608044
@@ -92,5 +113,8 @@ Security note
 
 This app does not collect, transmit or store location data off-device. It does
 not include Apple ID credentials, certificates, provisioning profiles or
-pairing files. Pairing files imported by the user are stored in the app's
-Application Support directory with 0600 permissions and are never logged.
+pairing files. Pairing files imported by the user are stored only in the app's
+Application Support directory (Pairing/) with 0600 permissions, Data Protection
+(iOS), and the "excluded from backup" flag; Documents copies created by older
+builds or by the document picker are deleted after import, and the file is never
+logged.

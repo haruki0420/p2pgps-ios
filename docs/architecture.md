@@ -28,9 +28,9 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 3. Location / Status / Extended を notify 購読。
 4. 20 bytes を受信 → `LocationPacket.decode`（長さ・version・予約ビット・座標範囲を検証）。
 5. `SequenceTracker` で巻き戻り / 欠落を分類（記録するが受理、仕様 §3.3）。
-6. `FixFilter` で外れ値除去と精度重み付き平滑化。
+6. `FixFilter` で外れ値除去と精度重み付き平滑化（stale は破棄せず、表示側の警告のみ。仕様 §3.3-7）。
 7. `GPSFix` を地図・軌跡・リードアウトに反映。
-8. 注入 ON のときだけ `LocationSimulationEngine.set(lat, lon)` を直列キューに投入。エンジンは 5 秒ごとに再送し、OFF で `clear`。
+8. 注入 ON のときだけ `LocationSimulationEngine.set(lat, lon)` を直列キューに投入。エンジンは 5 秒ごとに再送し、OFF で `clear`。注入中は `BackgroundKeepAlive` が低精度の位置更新でアプリの停止を防ぐ（§7）。
 
 ## 3. データフロー（Sender）
 
@@ -43,19 +43,22 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 
 ## 4. 位置注入エンジン（TLocation 移植）
 
-- `JITEnableContext`: アプリの長命な RSD トンネル（DDI マウント用）。`tunnel_create_rppairing` → `rsd_handshake`。
+- `JITEnableContext`: アプリの長命な RSD トンネル（DDI マウント用）。`tunnel_create_rppairing` → `rsd_handshake`。`TunnelManager.start()` も `LocationSimulationCommandQueue` に載せ、シミュレーションのハンドシェイクと直列化する。
 - `simulate_location`: 位置シミュレーション専用のトンネルを別途張り（エンドポイントは単一占有のため）、`remote_server_connect_rsd` → `location_simulation_new` → `location_simulation_set`。既存セッションがあれば `set` だけ呼ぶ。
-- `clear_simulated_location`: `location_simulation_clear` → 300 ms 待ってからハンドル解放。
-- すべての FFI 呼び出しは `LocationSimulationCommandQueue`（直列 `DispatchQueue`）上で実行。`LocationSimulationState` のハンドルはこのキューに閉じ込める。
-- `LocationSimulationEngine` が UI 向けファサード。5 秒ごとの再送、状態の `@Published`、日本語エラーメッセージを担当。
-- `URLSchemeLocationFallback`: 埋め込みエンジンが使えない場合に `tlocation://simulate-location?lat=..&lon=..` / `tlocation://clear-location` へ委譲。
+- `clear_simulated_location`: `location_simulation_clear` → 300 ms 待ってからハンドル解放。セッションが無いときは成功扱い（L-6）。
+- すべての FFI 呼び出しは `LocationSimulationCommandQueue`（直列 `DispatchQueue`）上で実行。`LocationSimulationState` のハンドルはこのキューに閉じ込める。DDI のマウントチェック / pairing file 読み取り / `mountPersonalDDI` も `MountingProgress` 経由で同じキューに載せる（main スレッドで FFI を呼ばない）。
+- `LocationSimulationEngine` が UI 向けファサード。5 秒ごとの再送、状態の `@Published`、日本語エラーメッセージを担当。トンネル系の失敗（providerCreate / remoteServer）では `markTunnelDisconnected()` を呼び、次回フォアグラウンドで再構築できるようにする。
+- **ライフサイクル（TLocation 移植）**: アプリが background → active に戻ったとき、注入セッションが継続していなければ `startTunnelAfterPendingLocationCommands()` でトンネルを再構築する。セッションが継続中の場合は `LocationSimulationSession` の session-ended 通知を待ってから再構築する（単一占有エンドポイントを奪わないため）。
+- `URLSchemeLocationFallback`: 埋め込みエンジンが使えない場合に `tlocation://simulate-location?lat=..&lon=..` / `tlocation://clear-location` へ委譲。`canOpenURL` で TLocation の有無を確認し、1 秒に 1 回へ間引く。委譲ログに座標は出さない（プライバシー）。
+- **DDI のサプライチェーン**: `DeveloperDiskImageService` は `doronz88/DeveloperDiskImage` の固定コミット `a1020f81b6429f5ce40408cbe21c690512b613b5` から取得し、3 ファイルすべてを SHA-256 で検証する。不一致は削除してエラー表示。再取得は全ファイルを一時名で取得して検証後に置換する。
+- **既知の未解決事項（M6）**: `remote_server` ハンドルの所有権（`location_simulation_new` が所有するか）は上流でも未確定。現在は上流どおり「所有する」前提で `cleanup()` から free しない（二重 free の回避を優先）。リークの有無は実機でセッションを開閉し、Instruments / `lsof` でソケット数を確認する必要がある。
 
 ## 5. 並行性
 
 - `P2PGPSProtocol` / `P2PGPSCore` は Swift 6 言語モード。値型中心で `Sendable`。
-- `P2PGPSBLE` / `P2PGPSLocation` / `P2PGPSInjection` / `P2PGPSApp` は Swift 5 言語モード。TLocation 由来のコード（静的ハンドル・`Thread`・`DispatchQueue`）をそのまま保つためです。
+- `P2PGPSBLE` / `P2PGPSLocation` / `P2PGPSInjection` / `P2PGPSApp` は Swift 5 言語モード。TLocation 由来のコード（静的ハンドル・`DispatchQueue`）をそのまま保つためです。テストターゲットも Swift 5 言語モード（XCTest と SwiftPM の `Bundle.module` アクセサが strict concurrency 前提でないため）。
 - CoreBluetooth のデリゲートは `queue: .main` で生成し、`@Published` の更新はメインスレッドに固定。
-- 位置注入の FFI は直列キュー、状態の publish は `DispatchQueue.main.async`。
+- 位置注入の FFI は直列キュー、状態の publish は `DispatchQueue.main.async`。`JITEnableContext` のハンドル操作（`startTunnel` / `ensureTunnel` / `invalidateTunnel`）も同じ直列キュー上でのみ行う。
 
 ## 6. 2 つのビルドシステム
 
@@ -69,9 +72,10 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 
 ## 7. バックグラウンド
 
-- Receiver: `bluetooth-central` + `location`。BLE 受信と注入ループを維持するため、`BackgroundKeepAlive` が低精度の位置更新を回す。
-- Sender: `bluetooth-peripheral` + `location`。CoreLocation の更新でアプリを起こし続け、fix 到着時に送信する（タイマーではなく fix 駆動なのでバックグラウンドでも止まりにくい）。
-- 位置情報は「常に許可」を推奨（「使用中のみ」だとバックグラウンドで停止）。
+- Receiver: `bluetooth-central` + `location`。BLE 受信は `bluetooth-central` で起床できるが、注入の 5 秒再送は `DispatchSourceTimer` なので、iOS に suspend されると止まる。注入 ON の間は `ReceiverController` が `BackgroundKeepAlive`（低精度・`allowsBackgroundLocationUpdates`）を開始し、画面を閉じてもプロセスを維持する。停止は注入 OFF・Receiver 画面を離れたとき・設定でバックグラウンド維持を OFF にしたとき。
+- Sender: `bluetooth-peripheral` + `location`。送信中は CoreLocation の更新でアプリを起こし続け、fix 到着時に送信する（タイマーではなく fix 駆動なのでバックグラウンドでも止まりにくい）。停止中は位置セッションを止める。
+- 位置情報は「常に許可」を推奨（「使用中のみ」だとバックグラウンドで停止）。設定画面の「バックグラウンド維持（受信側）」で Receiver の keep-alive を無効化できる。
+- フォアグラウンド復帰時は `RootView` が `ReceiverController.handleScenePhaseActive()` を呼び、注入セッションが無ければトンネルを再構築する（§4）。
 
 ## 8. テスト戦略
 

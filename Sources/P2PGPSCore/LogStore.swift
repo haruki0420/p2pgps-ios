@@ -102,13 +102,20 @@ public final class LogStore: ObservableObject, @unchecked Sendable {
     }
 
     /// Rounds a coordinate for logging / display.
+    ///
+    /// The format locale is pinned to `en_US_POSIX` so the decimal separator is
+    /// always "." regardless of the device locale (review L-18).
     public static func roundedCoordinate(
         latitude: Double,
         longitude: Double,
         decimalPlaces: Int
     ) -> String {
         let places = min(max(decimalPlaces, 0), 7)
-        return String(format: "%.\(places)f, %.\(places)f", latitude, longitude)
+        return String(
+            format: "%.\(places)f, %.\(places)f",
+            locale: Locale(identifier: "en_US_POSIX"),
+            arguments: [latitude, longitude]
+        )
     }
 
     /// A snapshot that does not depend on the main-thread publish loop.

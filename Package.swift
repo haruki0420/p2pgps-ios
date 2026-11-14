@@ -112,6 +112,9 @@ let package = Package(
             // TLocation's `TLocation/idevice/` directory (the same pair its
             // Xcode target finds through SWIFT_INCLUDE_PATHS). SwiftPM's
             // standard C-target layout puts public headers in `include/`.
+            // `LICENSE` is the upstream MIT text (see NOTICE) and is not a
+            // source file.
+            exclude: ["LICENSE"],
             publicHeadersPath: "include",
             cSettings: [
                 .headerSearchPath("include"),

@@ -186,7 +186,11 @@ private struct InjectionDiagnosticsRows: View {
         guard let latitude = engine.appliedLatitude, let longitude = engine.appliedLongitude else {
             return "—"
         }
-        return String(format: "%.5f, %.5f", latitude, longitude)
+        return String(
+            format: "%.5f, %.5f",
+            locale: Locale(identifier: "en_US_POSIX"),
+            arguments: [latitude, longitude]
+        )
     }
 }
 

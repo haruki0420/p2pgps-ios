@@ -49,6 +49,7 @@ struct SettingsView: View {
             Form {
                 connectionSection
                 injectionSection
+                receiverSection
                 senderSection
                 logSection
                 aboutSection
@@ -208,7 +209,17 @@ struct SettingsView: View {
         } header: {
             Text("位置注入")
         } footer: {
-            Text("pairing file と DDI は位置注入に必須です。URL スキーム委譲を有効にすると、別途インストールした TLocation に注入を任せます。")
+            Text("pairing file と DDI は位置注入に必須です。DDI は doronz88/DeveloperDiskImage の固定コミット（\(DeveloperDiskImageService.upstreamCommit.prefix(7))…）から取得し、SHA-256 を検証します。URL スキーム委譲を有効にすると、別途インストールした TLocation に注入を任せます。")
+        }
+    }
+
+    private var receiverSection: some View {
+        Section {
+            Toggle("バックグラウンド維持（受信側）", isOn: $settings.keepAliveLocationUpdates)
+        } header: {
+            Text("受信（iPad）")
+        } footer: {
+            Text("受信側で位置情報の反映中に、低精度の位置情報セッションでアプリの停止を防ぎます（位置情報の「常に許可」が必要です）。送信側は送信中のみ位置情報セッションで維持します。")
         }
     }
 
@@ -221,11 +232,10 @@ struct SettingsView: View {
             }
 
             Toggle("Extended Location を通知", isOn: $settings.extendedLocationEnabled)
-            Toggle("バックグラウンド維持", isOn: $settings.keepAliveLocationUpdates)
         } header: {
-            Text("送信")
+            Text("送信（iPhone）")
         } footer: {
-            Text("送信間隔は受信側の START コマンドでも変更されます。バックグラウンド維持は低精度の位置情報セッションでアプリの停止を防ぎます。")
+            Text("送信間隔は受信側の START コマンドでも変更されます。")
         }
     }
 

@@ -14,7 +14,8 @@
 //    tlocation://clear-location
 //
 //  This is a fallback, not the primary path: it requires TLocation to be
-//  installed and set up separately.
+//  installed and set up separately. Coordinates are deliberately NOT written to
+//  the log (review M7); only the fact that a delegation happened is logged.
 //
 
 import Foundation
@@ -31,14 +32,28 @@ public enum URLSchemeLocationFallback {
     /// The URL scheme TLocation registers.
     public static let scheme = "tlocation"
 
+    /// Whether a TLocation build that handles the scheme is installed.
+    ///
+    /// `canOpenURL` requires the scheme in `LSApplicationQueriesSchemes`
+    /// (Info.plist); it is checked before delegating so an absent TLocation
+    /// shows a clear error instead of silently doing nothing.
+    public static var isAvailable: Bool {
+        #if canImport(UIKit)
+        guard let url = clearURL else { return false }
+        return UIApplication.shared.canOpenURL(url)
+        #else
+        return false
+        #endif
+    }
+
     /// `tlocation://simulate-location?lat=…&lon=…`
     public static func simulateURL(latitude: Double, longitude: Double) -> URL? {
         var components = URLComponents()
         components.scheme = scheme
         components.host = "simulate-location"
         components.queryItems = [
-            URLQueryItem(name: "lat", value: String(format: "%.7f", latitude)),
-            URLQueryItem(name: "lon", value: String(format: "%.7f", longitude)),
+            URLQueryItem(name: "lat", value: coordinateString(latitude)),
+            URLQueryItem(name: "lon", value: coordinateString(longitude)),
         ]
         return components.url
     }
@@ -65,10 +80,21 @@ public enum URLSchemeLocationFallback {
         return open(url)
     }
 
+    /// Locale-independent decimal formatting: a comma decimal separator would
+    /// break the URL query (review L-18).
+    private static func coordinateString(_ value: Double) -> String {
+        String(format: "%.7f", locale: Locale(identifier: "en_US_POSIX"), arguments: [value])
+    }
+
     private static func open(_ url: URL) -> Bool {
         #if canImport(UIKit)
-        UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        LogStore.shared.info("TLocation の URL スキームへ委譲しました: \(url.absoluteString)")
+        UIApplication.shared.open(url, options: [:]) { success in
+            if success {
+                LogStore.shared.info("TLocation の URL スキームへ委譲しました")
+            } else {
+                LogStore.shared.warning("TLocation の URL スキームを開けませんでした")
+            }
+        }
         return true
         #else
         LogStore.shared.warning("このプラットフォームでは URL スキーム委譲を利用できません")

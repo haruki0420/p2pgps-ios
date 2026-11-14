@@ -34,7 +34,7 @@ pairing file は、この iPad 自身のペアリングレコードです。取�
 - **StikDebug / SideStore の手順で取得**: [StikDebug-Guide の pairing file ガイド](https://github.com/StikDebug/StikDebug-Guide/blob/main/pairing_file.md) の手順で `pairingFile.mobiledevicepairing` を生成し、Files アプリに保存します。
 - すでに StikDebug / TLocation を使っている場合は、そのアプリで使っている pairing file をそのまま利用できます。
 
-> pairing file は秘密情報です。他人に共有したり、リポジトリにコミットしたりしないでください。本アプリは Application Support 配下に 0600 で保存し、ログには出しません。
+> pairing file は秘密情報です。他人に共有したり、リポジトリにコミットしたりしないでください。本アプリは Application Support の `Pairing/` 配下に 0600・Data Protection・バックアップ除外で保存し、Documents に残ったコピーは読み込み後に削除します。ログには出しません。
 
 ## 4. アプリに pairing file を読み込む
 
@@ -48,7 +48,7 @@ pairing file は、この iPad 自身のペアリングレコードです。取�
 2. 完了後、自動でマウントを試みます。失敗する場合は「DDI をマウント」を押す。
 3. 「マウント済み」になれば準備完了。
 
-DDI の取得元: [doronz88/DeveloperDiskImage](https://github.com/doronz88/DeveloperDiskImage)（PersonalizedImages/Xcode_iOS_DDI_Personalized）。
+DDI の取得元: [doronz88/DeveloperDiskImage](https://github.com/doronz88/DeveloperDiskImage)（PersonalizedImages/Xcode_iOS_DDI_Personalized）。URL は固定コミット `a1020f81b6429f5ce40408cbe21c690512b613b5` に固定し、ダウンロード後に 3 ファイルすべての SHA-256 を検証します。不一致のファイルは削除してエラーを表示するので、その場合は再取得してください。
 
 ## 6. 位置を反映する
 

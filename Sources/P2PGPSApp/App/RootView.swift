@@ -10,6 +10,10 @@
 //  and Sender controllers live here so switching screens never drops a BLE
 //  connection or a streaming session.
 //
+//  Review M4: background → active transitions rebuild the Receiver's RSD
+//  tunnel (deferred while a location simulation still owns the endpoint), the
+//  same lifecycle TLocation implements in `TLocationApp`.
+//
 
 #if canImport(UIKit)
 import Foundation
@@ -30,8 +34,14 @@ struct RootView: View {
         }
         .tint(P2PColor.pine)
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
+            switch phase {
+            case .background:
+                receiver.handleScenePhaseBackground()
+            case .active:
                 sender.refreshAuthorization()
+                receiver.handleScenePhaseActive()
+            default:
+                break
             }
         }
     }

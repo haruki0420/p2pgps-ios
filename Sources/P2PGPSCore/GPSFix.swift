@@ -121,7 +121,14 @@ public struct GPSFix: Equatable, Sendable, Identifiable {
     }
 
     /// Short coordinate string for banners and lists (5 decimal places ≈ 1 m).
+    ///
+    /// The format locale is pinned so the decimal separator is always "."
+    /// (review L-18).
     public func coordinateDescription(decimalPlaces: Int = 5) -> String {
-        String(format: "%.\(decimalPlaces)f, %.\(decimalPlaces)f", latitude, longitude)
+        String(
+            format: "%.\(decimalPlaces)f, %.\(decimalPlaces)f",
+            locale: Locale(identifier: "en_US_POSIX"),
+            arguments: [latitude, longitude]
+        )
     }
 }

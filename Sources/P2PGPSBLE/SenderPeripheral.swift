@@ -78,7 +78,12 @@ public final class SenderPeripheral: NSObject, ObservableObject {
     private var lastStatusData = SenderStatus.idle.encoded()
 
     private var pendingAdvertising = false
-    private var subscribedCentralIDs: Set<UUID> = []
+    /// Per-characteristic subscriptions (review M8): a central may subscribe to
+    /// only some of Location / Status / Extended, and unsubscribing from one
+    /// characteristic must not drop the others.
+    private var locationSubscribers: Set<UUID> = []
+    private var statusSubscribers: Set<UUID> = []
+    private var extendedSubscribers: Set<UUID> = []
     private let log = LogStore.shared
 
     // MARK: - Init
@@ -213,13 +218,30 @@ public final class SenderPeripheral: NSObject, ObservableObject {
     }
 
     private func notifyIfSubscribed(_ data: Data, characteristic: CBMutableCharacteristic?) {
-        guard let characteristic, subscriberCount > 0 else { return }
+        guard let characteristic, !subscribers(for: characteristic).isEmpty else { return }
         let delivered = manager.updateValue(data, for: characteristic, onSubscribedCentrals: nil)
         if !delivered {
             // The transmit queue is full; the next update will carry the newer
             // value, so dropping this one is correct for a 1 Hz stream.
             log.debug("notify キューが満杯のため送信をスキップ (\(characteristic.uuid))")
         }
+    }
+
+    private func subscribers(for characteristic: CBMutableCharacteristic?) -> Set<UUID> {
+        guard let characteristic else { return [] }
+        if characteristic.uuid == BLEUUID.location { return locationSubscribers }
+        if characteristic.uuid == BLEUUID.status { return statusSubscribers }
+        if characteristic.uuid == BLEUUID.extended { return extendedSubscribers }
+        return []
+    }
+
+    /// `subscriberCount` is the number of centrals subscribed to *any* of the
+    /// notify characteristics (not the sum of per-characteristic subscriptions).
+    private func refreshSubscriberCount() {
+        let all = locationSubscribers.union(statusSubscribers).union(extendedSubscribers)
+        subscriberCount = all.count
+        updateState()
+        onSubscribersChanged?(subscriberCount)
     }
 
     private func updateState() {
@@ -247,6 +269,7 @@ extension SenderPeripheral: CBPeripheralManagerDelegate {
         isBluetoothAvailable = peripheral.state == .poweredOn
         switch peripheral.state {
         case .poweredOn:
+            lastError = nil
             log.info("Bluetooth が利用可能になりました（ペリフェラル）")
             if pendingAdvertising {
                 if service == nil {
@@ -286,6 +309,7 @@ extension SenderPeripheral: CBPeripheralManagerDelegate {
             reportError("アドバタイズを開始できませんでした: \(error.localizedDescription)")
         } else {
             isAdvertising = true
+            lastError = nil
             log.info("アドバタイズを開始しました: \(localName)")
         }
         updateState()
@@ -317,8 +341,12 @@ extension SenderPeripheral: CBPeripheralManagerDelegate {
 
     public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
+            guard request.characteristic.uuid == BLEUUID.control else {
+                // Only Control is writable (spec §1.1).
+                peripheral.respond(to: request, withResult: .writeNotPermitted)
+                continue
+            }
             defer { peripheral.respond(to: request, withResult: .success) }
-            guard request.characteristic.uuid == BLEUUID.control else { continue }
             guard let data = request.value else { continue }
 
             do {
@@ -341,11 +369,17 @@ extension SenderPeripheral: CBPeripheralManagerDelegate {
         central: CBCentral,
         didSubscribeTo characteristic: CBCharacteristic
     ) {
-        subscribedCentralIDs.insert(central.identifier)
-        subscriberCount = subscribedCentralIDs.count
-        log.info("セントラルが購読を開始しました (\(characteristic.uuid), 合計 \(subscriberCount))")
-        updateState()
-        onSubscribersChanged?(subscriberCount)
+        if characteristic.uuid == BLEUUID.location {
+            locationSubscribers.insert(central.identifier)
+        } else if characteristic.uuid == BLEUUID.status {
+            statusSubscribers.insert(central.identifier)
+        } else if characteristic.uuid == BLEUUID.extended {
+            extendedSubscribers.insert(central.identifier)
+        } else {
+            return
+        }
+        log.info("セントラルが購読を開始しました (\(characteristic.uuid))")
+        refreshSubscriberCount()
     }
 
     public func peripheralManager(
@@ -353,11 +387,17 @@ extension SenderPeripheral: CBPeripheralManagerDelegate {
         central: CBCentral,
         didUnsubscribeFrom characteristic: CBCharacteristic
     ) {
-        subscribedCentralIDs.remove(central.identifier)
-        subscriberCount = subscribedCentralIDs.count
-        log.info("セントラルが購読を終了しました (\(characteristic.uuid), 合計 \(subscriberCount))")
-        updateState()
-        onSubscribersChanged?(subscriberCount)
+        if characteristic.uuid == BLEUUID.location {
+            locationSubscribers.remove(central.identifier)
+        } else if characteristic.uuid == BLEUUID.status {
+            statusSubscribers.remove(central.identifier)
+        } else if characteristic.uuid == BLEUUID.extended {
+            extendedSubscribers.remove(central.identifier)
+        } else {
+            return
+        }
+        log.info("セントラルが購読を終了しました (\(characteristic.uuid))")
+        refreshSubscriberCount()
     }
 
     public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {

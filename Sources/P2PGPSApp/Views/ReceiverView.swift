@@ -103,6 +103,9 @@ struct ReceiverView: View {
             controller.onAppear()
             centerIfNeeded()
         }
+        .onDisappear {
+            controller.onDisappear()
+        }
         .onChange(of: central.latestFix?.latitude) { _, _ in
             centerIfNeeded()
         }
@@ -181,12 +184,12 @@ struct ReceiverView: View {
             CoordinateRow(
                 label: "緯度",
                 value: P2PFormat.coordinate(fix.latitude),
-                spokenValue: P2PFormat.spokenCoordinate(latitude: fix.latitude, longitude: fix.longitude)
+                spokenValue: P2PFormat.spokenLatitude(fix.latitude)
             )
             CoordinateRow(
                 label: "経度",
                 value: P2PFormat.coordinate(fix.longitude),
-                spokenValue: P2PFormat.spokenCoordinate(latitude: fix.latitude, longitude: fix.longitude)
+                spokenValue: P2PFormat.spokenLongitude(fix.longitude)
             )
 
             HStack(alignment: .top, spacing: 12) {

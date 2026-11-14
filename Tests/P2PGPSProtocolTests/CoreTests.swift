@@ -78,14 +78,15 @@ final class FixFilterTests: XCTestCase {
         }
     }
 
-    func testStaleFixIsRejected() {
+    func testStaleFixIsAcceptedButFlagged() {
         var filter = FixFilter()
         let old = Date().addingTimeInterval(-25 * 60 * 60)
         let fix = makeFix(latitude: 35.0, longitude: 139.0, timestamp: old)
-        guard case .rejected(.stale) = filter.process(fix) else {
-            XCTFail("24 時間以上前の fix は拒否されるべき")
+        guard case .accepted(let accepted) = filter.process(fix) else {
+            XCTFail("stale は破棄せず受理し、表示側で警告する（仕様 §3.3-7）")
             return
         }
+        XCTAssertTrue(accepted.isStale(now: Date()))
     }
 
     func testSmoothingMovesTowardsNewFix() {

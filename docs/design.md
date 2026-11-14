@@ -24,7 +24,7 @@
 | `danger` | `#A32E24` | `#E0705F` | `P2PColor.danger` |
 
 - 既定の青 tint は使わず、ルートで `.tint(P2PColor.pine)`。
-- 塗りボタンの文字色は `P2PColor.paper`（Light/Dark どちらでもコントラストが取れるため）。
+- 塗りボタンの文字色は `onPrimary` = `paper`（root DESIGN.md の「Light 白相当 / Dark paper」に対応。実測 Light 5.75:1 / Dark 8.17:1）。`liveFill` 塗りは `onLiveFill`（Light 白 / Dark paper）を使う（§4 参照）。
 
 ### Typography
 
@@ -43,7 +43,9 @@
 
 `P2PSpacing`（gutter 16、rail 52、primary 52、corner 16/10、tap 44、hairline 1）。モーションは OS 標準の画面遷移、押下 0.98 スケール、地図カメラの `easeInOut 0.4s`（Reduce Motion で無効）のみです。
 
-**LED はパルスしません**（root `DESIGN.md` の v1.0.1 更新に合わせて静的表示）。接続状態は `StatusRail` が LED の右に状態テキスト（「接続済み」「スキャン中」「接続中」「切断中」「未接続」）を併記するため、色だけに依存しません。座標の 120ms クロスフェードは未実装で、値は即時更新されます（DESIGN.md の Motion のうち実装済みなのは地図カメラと押下フィードバックのみ）。
+**LED はパルスしません**（root `DESIGN.md` の v1.0.1 更新に合わせて静的表示）。接続状態は `StatusRail` が LED の右に状態テキスト（「接続済み」「スキャン中」「接続中」「切断中」「未接続」）を併記するため、色だけに依存しません。
+
+**座標の 120ms クロスフェードは v1 では静的**（値は即時更新）です。DESIGN.md の Motion のうち実装済みなのは地図カメラと押下フィードバックのみで、Reduce Motion は地図カメラのアニメーションを止めます。
 
 ## 2. コンポーネント対応
 
@@ -51,16 +53,16 @@
 
 | DESIGN.md | 実装 | 備考 |
 | :--- | :--- | :--- |
-| Status rail | `StatusRail` | `TimelineView(.periodic(by: 1))` で「最終受信 0.8 秒前」を更新。LED の右に状態テキスト（`statusText`）を併記 |
-| Signal bars | `SignalBars` | 4 本 3×10pt、`ink` / `line` |
+| Status rail | `StatusRail` | `TimelineView(.periodic(by: 1))` で「最終受信 0.8 秒前」を更新。LED の右に状態テキスト（`statusText`）を併記。Sender では `lastEventLabel: "最終送信"` |
+| Signal bars | `SignalBars` | 4 本 3×10pt、`ink` / `line`。`StatusRail` に表示（VoiceOver では状態テキストで代替し、バー自体は非表示） |
 | Connection LED | `ConnectionLED` | 8pt。接続=pine、待機=amber、エラー=danger、未接続=inkSecondary 輪郭。**パルスなし（静的）**。色だけに依存しないよう状態テキストを併記 |
 | Readout plate | `ReadoutPlate` | `surface`、上角丸 16、上辺 1px `line` |
-| Coordinate row | `CoordinateRow` | `.title3` monospaced semibold、VoiceOver は「北緯 …, 東経 …」 |
+| Coordinate row | `CoordinateRow` | `.title3` monospaced semibold、VoiceOver は緯度行「北緯 …」/ 経度行「東経 …」を別々に読み上げ |
 | Metrics | `MetricItem` | 標高 / 精度 / 速度 / 更新 |
-| Primary action | `PrimaryActionButton` | 52pt、`pine` 塗り、**文字色 = `onPrimary`（= `paper`）**、押下 0.98 |
+| Primary action | `PrimaryActionButton` | 52pt、`pine` 塗り、**文字色 = `onPrimary`（Light 白相当 / Dark paper）**、押下 0.98 |
 | Live toggle | `LiveToggleButton` | 52pt。OFF=surface+line、ON=liveFill + **`onLiveFill` 文字** + 左 3pt live バー |
 | Live banner | `LiveBanner` | safe area inset 上部、liveFill 10% 背景、左 3pt live、右「停止」 |
-| Range rings / crosshair | `MapCrosshairMarker` | 地図上に 3 本のリング + クロスヘア（スクリーン空間の目安） |
+| Range rings / crosshair | `MapCrosshairMarker` | 地図上に 3 本のリング + クロスヘア。**スクリーン空間の固定半径（88/156/232 pt）**で、v1 ではメートル換算しない（正確な距離スケールが必要になったら `MapReader` / `MapProxy.convert` で実装） |
 | Trail | `MapPolyline` | pine 70%、3pt、丸キャップ |
 | Fix quality | `FixQualityBars` | Sender 用 4 セグメント |
 
@@ -88,17 +90,17 @@
 ### 追加で確認した点
 
 - **コントラスト（C-8）**: 塗りボタンの文字色はハードコードせずトークンで持つ。
-  - `P2PColor.onPrimary` = `paper`（`PrimaryActionButton` の `pine` 塗り）: Light **5.75:1** / Dark **8.17:1**。
+  - `P2PColor.onPrimary` = `paper`（`PrimaryActionButton` の `pine` 塗り。root DESIGN の「Light 白 / Dark paper」に対応）: Light **5.75:1** / Dark **8.17:1**。
   - `P2PColor.onLiveFill`（`LiveToggleButton` ON の `liveFill` 塗り）: Light = white **4.54:1** / Dark = `paper` **4.74:1**。Light の `liveFill` に `paper` を載せると 4.11:1 で AA 未満になるため、`onLiveFill` を分けている。
   - `Color.white` をハードコードしないこと。Dark の `pine` は明るく、白文字だと **2.17:1** まで落ちる（Android の C-8 と同じ落とし穴）。
   - 補助テキストの `inkSecondary`: Light 5.44:1 / Dark 7.86:1（本文には使わない）。
 - `inkSecondary` は本文ではなく補助ラベルのみ。
 - 数値はすべて `.monospacedDigit()`。座標は `.minimumScaleFactor(0.65)` で Dynamic Type 大でも 1 行に収める。
 - 空状態・エラー状態・権限不足状態を用意（`P2PEmptyState` / `P2PErrorRow` / SenderView の許可導線）。
-- VoiceOver: 座標は「北緯 35.681236、東経 139.767125」、LED とシグナルバーは非表示（状態文言で代替）、ボタンは動作を名指し。
+- VoiceOver: 座標は緯度行「北緯 35.681236」/ 経度行「東経 139.767125」を別々に読み上げます（`P2PFormat.spokenLatitude` / `spokenLongitude`）。LED とシグナルバーは非表示（状態テキストで代替）、ボタンは動作を名指し。
 
 ## 5. 検証状況
 
-- コンパイル: CI（macOS ランナー）で検証予定。ローカルに Swift / Xcode / Simulator は無い。
+- コンパイル: **CI（macOS ランナー）で検証済み**（`swift test` / iOS クロスビルド / XcodeGen + xcodebuild リンクのみ）。ローカルに Swift / Xcode / Simulator は無い。
 - レンダリング: **未検証**。Dynamic Type XXL・Dark Mode・Reduce Motion の実画面確認は実機で行う必要があります。既知の制約として README に記載。
-- 地図のレンジリングはスクリーン空間の固定半径（88/156/232 pt）で、メートル換算はしていません。正確な距離スケールが必要になったら `MapReader` / `MapProxy.convert` で実装してください。
+- 地図のレンジリングはスクリーン空間の固定半径（88/156/232 pt）で、メートル換算はしていません（v1 の既知の制約）。正確な距離スケールが必要になったら `MapReader` / `MapProxy.convert` で実装してください。

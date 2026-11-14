@@ -33,10 +33,11 @@ struct SenderView: View {
             StatusRail(
                 ledState: ledState,
                 senderName: controller.localName,
-                lastReceivedAt: nil,
+                lastReceivedAt: controller.lastSentAt,
                 signalQuality: signalQuality,
                 accuracyText: "購読 \(controller.subscriberCount) 台",
-                statusText: controller.bleState.localizedDescription
+                statusText: controller.bleState.localizedDescription,
+                lastEventLabel: "最終送信"
             )
 
             ScrollView {
@@ -117,12 +118,12 @@ struct SenderView: View {
             CoordinateRow(
                 label: "緯度",
                 value: P2PFormat.coordinate(fix.latitude),
-                spokenValue: P2PFormat.spokenCoordinate(latitude: fix.latitude, longitude: fix.longitude)
+                spokenValue: P2PFormat.spokenLatitude(fix.latitude)
             )
             CoordinateRow(
                 label: "経度",
                 value: P2PFormat.coordinate(fix.longitude),
-                spokenValue: P2PFormat.spokenCoordinate(latitude: fix.latitude, longitude: fix.longitude)
+                spokenValue: P2PFormat.spokenLongitude(fix.longitude)
             )
             HStack(alignment: .top, spacing: 12) {
                 MetricItem(label: "精度", value: P2PFormat.accuracy(fix.horizontalAccuracyMeters))
@@ -249,6 +250,10 @@ struct SenderView: View {
     }
 
     private var ledState: ConnectionLED.State {
+        // A BLE error is the most important state to surface (review L-20).
+        if controller.hasPeripheralError {
+            return .error
+        }
         if controller.isStreaming && controller.subscriberCount > 0 {
             return .connected
         }

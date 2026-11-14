@@ -24,7 +24,9 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
   `tlocation://` URL スキームへ委譲するフォールバックを設定で選べる。
 - iPad 側は Developer Mode / LocalDevVPN / pairing file / DDI が前提。
 - Sender は `bluetooth-peripheral` + `location`、Receiver は `bluetooth-central` +
-  `location` の UIBackgroundModes でバックグラウンド継続を担保する。
+  `location` の UIBackgroundModes を使う。Sender は送信中の位置情報セッションで、
+  Receiver は注入 ON の間 `BackgroundKeepAlive`（低精度セッション）でバックグラウンド
+  継続を担保する（設定で無効化可）。
 
 ## 画面と実装の対応
 

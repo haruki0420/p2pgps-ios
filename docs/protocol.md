@@ -90,4 +90,5 @@ UUID は文字列で保持し、CoreBluetooth への変換は `P2PGPSBLE.BLEUUID
 - 浮動小数点はワイヤに載せない。度への変換は表示・地図用のみ。
 - `Data` の整数アクセスはリトルエンディアン明示のヘルパー（`ByteCodec`）経由。
 - 受信側は「破棄するか受理するか」を型で表す: `LocationPacket.decode` は構造的に不正なら throw、Null Island は受理しつつ `isUsableFix == false`。
+- **stale（タイムスタンプが ±24 時間を超える）は破棄しません**（仕様 §3.3-7）。`FixFilter` は stale を理由に reject せず、`GPSFix.isStale(now:)` を表示側の警告（ReceiverView の「送信側の時刻が 24 時間以上ずれています」）に使います。注入するかはユーザー設定に従います。
 - 送信側は `LocationPacket(fix:sequence:extraFlags:)` で flags を自動設定。範囲外の座標は境界にクランプして「デコード不能なパケットを送らない」ことを保証。

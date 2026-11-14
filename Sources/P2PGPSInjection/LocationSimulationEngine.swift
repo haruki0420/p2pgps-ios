@@ -30,6 +30,14 @@ import P2PGPSCore
 #endif
 import idevice
 
+/// Posted on the main thread when the injection session or its resend loop
+/// ends, i.e. when the single-occupancy RSD endpoint becomes free again.
+///
+/// Public so the app target can observe it (review M4).
+public extension Notification.Name {
+    static let p2pLocationSimulationSessionEnded = Notification.Name("jp.haruki0420.p2pgps.locationSimulationSessionEnded")
+}
+
 // MARK: - Upstream status codes
 
 enum LocationSimulationStatus {
@@ -75,7 +83,16 @@ enum LocationSimulationState {
 }
 
 /// Lock-guarded mirror of the session state, readable from any thread.
+///
+/// Posts `.locationSimulationSessionEnded` on the main thread when either the
+/// device session closes or the resend loop stops, so the app can defer a
+/// tunnel rebuild until the single-occupancy RSD endpoint is free (review M4,
+/// ported from TLocation's `locationSimulationSessionEnded`).
 enum LocationSimulationSession {
+    /// The app is no longer holding or maintaining a location-simulation
+    /// session; observers may retry a deferred tunnel rebuild.
+    static let sessionEndedNotification = Notification.Name.p2pLocationSimulationSessionEnded
+
     private static let lock = NSLock()
     private static var open = false
     private static var maintained = false
@@ -95,14 +112,32 @@ enum LocationSimulationSession {
     /// Called by the resend loop as it starts and stops.
     static func setMaintained(_ newValue: Bool) {
         lock.lock()
+        let wasMaintained = maintained
         maintained = newValue
         lock.unlock()
+        if wasMaintained && !newValue {
+            postSessionEnded()
+        }
     }
 
     fileprivate static func set(open newValue: Bool) {
         lock.lock()
+        let wasOpen = open
         open = newValue
         lock.unlock()
+        if wasOpen && !newValue {
+            postSessionEnded()
+        }
+    }
+
+    private static func postSessionEnded() {
+        if Thread.isMainThread {
+            NotificationCenter.default.post(name: sessionEndedNotification, object: nil)
+        } else {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: sessionEndedNotification, object: nil)
+            }
+        }
     }
 }
 
@@ -221,6 +256,12 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
     // a handle per session costs a socket, while freeing a handle the Rust side
     // still owns is a double free and a crash on the success path of the app's
     // main feature. Left exactly as upstream.
+    //
+    // REVIEW M6: this ownership question is still open. The leak (if any) is
+    // one socket per simulation session, so it is invisible in CI; it must be
+    // checked on a real device (open/close simulation repeatedly and watch the
+    // process' file descriptors with Instruments or `lsof`). See
+    // docs/architecture.md §4 "既知の未解決事項".
     LocationSimulationState.remoteServer = nil
 
     LocationSimulationSession.set(open: true)
@@ -307,6 +348,9 @@ public final class LocationSimulationEngine: ObservableObject {
     private let queue = LocationSimulationCommandQueue.shared
     private var resendTimer: DispatchSourceTimer?
     private let log = LogStore.shared
+    /// Monotonic token so a slow FFI call cannot clear `isWorking` for a newer
+    /// request (review L-7).
+    private var operationGeneration = 0
 
     private init() {}
 
@@ -321,6 +365,8 @@ public final class LocationSimulationEngine: ObservableObject {
         }
 
         stopResendLoop()
+        operationGeneration += 1
+        let generation = operationGeneration
         isWorking = true
         let targetIP = DeviceConnectionContext.targetIPAddress
         let pairingPath = PairingFileStore.prepareURL().path
@@ -328,7 +374,7 @@ public final class LocationSimulationEngine: ObservableObject {
         queue.async { [weak self] in
             let code = simulate_location(targetIP, latitude, longitude, pairingPath)
             DispatchQueue.main.async {
-                guard let self else { return }
+                guard let self, generation == self.operationGeneration else { return }
                 self.isWorking = false
                 self.sessionOpen = LocationSimulationSession.isOpen
                 if code == LocationSimulationStatus.ok {
@@ -341,6 +387,13 @@ public final class LocationSimulationEngine: ObservableObject {
                 } else {
                     self.isSimulating = false
                     self.lastError = Self.message(for: code)
+                    // The app's own tunnel is unusable after a handshake
+                    // failure; drop it so the next foreground retry reconnects
+                    // (review L-8).
+                    if code == LocationSimulationStatus.providerCreate
+                        || code == LocationSimulationStatus.remoteServer {
+                        markTunnelDisconnected()
+                    }
                 }
             }
         }
@@ -349,18 +402,36 @@ public final class LocationSimulationEngine: ObservableObject {
     /// Clears the simulated location and stops the resend loop.
     public func clear() {
         stopResendLoop()
+
+        // With no session there is nothing to clear; treat it as success
+        // instead of surfacing the upstream "no session" error (review L-6).
+        guard LocationSimulationSession.isOpen || isSimulating else {
+            // Invalidate any in-flight `set` so it cannot resurrect the session
+            // after the user turned injection off.
+            operationGeneration += 1
+            isSimulating = false
+            appliedLatitude = nil
+            appliedLongitude = nil
+            sessionOpen = false
+            lastError = nil
+            return
+        }
+
+        operationGeneration += 1
+        let generation = operationGeneration
         isWorking = true
 
         queue.async { [weak self] in
             let code = clear_simulated_location()
             DispatchQueue.main.async {
-                guard let self else { return }
+                guard let self, generation == self.operationGeneration else { return }
                 self.isWorking = false
                 self.isSimulating = false
                 self.appliedLatitude = nil
                 self.appliedLongitude = nil
                 self.sessionOpen = LocationSimulationSession.isOpen
-                if code == LocationSimulationStatus.ok {
+                if code == LocationSimulationStatus.ok
+                    || code == LocationSimulationStatus.locationClear {
                     self.lastError = nil
                 } else {
                     self.lastError = Self.message(for: code)
@@ -374,9 +445,9 @@ public final class LocationSimulationEngine: ObservableObject {
         stopResendLoop()
     }
 
-    /// Re-queries the DDI mount state in the background.
+    /// Re-queries the DDI mount state on the serial FFI queue.
     public func refreshMountState() {
-        DispatchQueue.global(qos: .utility).async { [weak self] in
+        queue.async { [weak self] in
             let mounted = isDDIMounted()
             DispatchQueue.main.async {
                 self?.isDeveloperDiskImageMounted = mounted

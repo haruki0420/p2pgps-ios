@@ -53,8 +53,15 @@ iPhone (Sender)                         iPad (Receiver)
 - `JITEnableContext`: DDI マウント用の長命トンネル
 - `simulate_location`: 注入専用トンネル → `remote_server_connect_rsd` → `location_simulation_new/set`
 - `clear_simulated_location`: `location_simulation_clear` → 300 ms 待って解放
-- すべての FFI は直列 `DispatchQueue` 上で実行（RSD エンドポイントは単一占有）
+- すべての FFI は直列 `DispatchQueue` 上で実行（RSD エンドポイントは単一占有）。DDI のマウントチェックとマウントも同じキューに載せる
+- フォアグラウンド復帰時は注入セッションの終了を待ってトンネルを再構築（`startTunnelAfterPendingLocationCommands`）
+- DDI は固定コミットから取得し、SHA-256 を検証
 - 失敗時は `tlocation://` URL スキームへ委譲可能
+
+## バックグラウンド
+
+- Sender: 送信中の位置情報セッションで継続
+- Receiver: 注入 ON の間 `BackgroundKeepAlive`（低精度セッション）で継続。設定で無効化可
 
 ## ビルド
 

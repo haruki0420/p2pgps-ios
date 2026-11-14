@@ -115,8 +115,18 @@ public final class ReceiverCentral: NSObject, ObservableObject {
     private var reconnectWorkItem: DispatchWorkItem?
     private var lastSenderName: String?
     private var lastSenderIdentifier: UUID?
+    /// A user-requested disconnect must never trigger auto-reconnect (review M9).
+    private var userInitiatedDisconnect = false
+    /// Set while waiting for the allowed sender to reappear; `didDiscover`
+    /// connects as soon as it does (review M10).
+    private var isReconnectPending = false
+    private var rssiTimer: Timer?
     private let defaults: UserDefaults
     private let log = LogStore.shared
+
+    deinit {
+        rssiTimer?.invalidate()
+    }
 
     // MARK: - Init
 
@@ -146,6 +156,7 @@ public final class ReceiverCentral: NSObject, ObservableObject {
         guard !isScanning else { return }
         discoveredSenders.removeAll()
         isScanning = true
+        lastError = nil
         updateState(.scanning)
         central.scanForPeripherals(
             withServices: [BLEUUID.service],
@@ -183,14 +194,22 @@ public final class ReceiverCentral: NSObject, ObservableObject {
     }
 
     /// Disconnects and stops scanning.
-    public func disconnect() {
+    ///
+    /// - Parameter userInitiated: `true` (default) suppresses auto-reconnect;
+    ///   pass `false` only for internal teardown that should reconnect later.
+    public func disconnect(userInitiated: Bool = true) {
+        userInitiatedDisconnect = userInitiated
+        isReconnectPending = false
         stopScanning()
         reconnectWorkItem?.cancel()
         reconnectWorkItem = nil
+        stopRSSIPolling()
         if let peripheral = targetPeripheral {
             updateState(.disconnecting)
             central.cancelPeripheralConnection(peripheral)
         } else {
+            // Nothing to cancel, so no delegate callback will clear the flag.
+            userInitiatedDisconnect = false
             updateState(.idle)
         }
     }
@@ -239,6 +258,12 @@ public final class ReceiverCentral: NSObject, ObservableObject {
     private func connect(peripheral: CBPeripheral, name: String) {
         reconnectWorkItem?.cancel()
         reconnectWorkItem = nil
+        userInitiatedDisconnect = false
+        isReconnectPending = false
+        // Never leave a second connection dangling (review L-22).
+        if let existing = targetPeripheral, existing.identifier != peripheral.identifier {
+            central.cancelPeripheralConnection(existing)
+        }
         targetPeripheral = peripheral
         peripheral.delegate = self
         lastSenderName = name
@@ -256,6 +281,11 @@ public final class ReceiverCentral: NSObject, ObservableObject {
         onStateChange?(newState)
     }
 
+    private var isConnecting: Bool {
+        if case .connecting = state { return true }
+        return false
+    }
+
     private func reportError(_ message: String) {
         lastError = message
         log.error(message)
@@ -263,10 +293,13 @@ public final class ReceiverCentral: NSObject, ObservableObject {
     }
 
     private func scheduleReconnectIfNeeded() {
-        guard autoReconnect, let identifier = lastSenderIdentifier else { return }
+        guard autoReconnect, !userInitiatedDisconnect, let identifier = lastSenderIdentifier else { return }
+        isReconnectPending = true
         let workItem = DispatchWorkItem { [weak self] in
-            guard let self, self.autoReconnect else { return }
+            guard let self, self.autoReconnect, self.isReconnectPending else { return }
             guard let peripheral = self.discoveredPeripheral(for: identifier) else {
+                // Not visible yet; keep `isReconnectPending` set so `didDiscover`
+                // connects as soon as the allowed sender reappears (M10).
                 self.startScanning()
                 return
             }
@@ -277,6 +310,19 @@ public final class ReceiverCentral: NSObject, ObservableObject {
         log.info("1 秒後に再スキャン / 再接続します")
     }
 
+    private func startRSSIPolling() {
+        stopRSSIPolling()
+        targetPeripheral?.readRSSI()
+        rssiTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+            self?.targetPeripheral?.readRSSI()
+        }
+    }
+
+    private func stopRSSIPolling() {
+        rssiTimer?.invalidate()
+        rssiTimer = nil
+    }
+
     private func resetPeripheralState() {
         locationCharacteristic = nil
         controlCharacteristic = nil
@@ -285,6 +331,7 @@ public final class ReceiverCentral: NSObject, ObservableObject {
         filter.reset()
         sequenceTracker.reset()
         signalQuality = .none
+        stopRSSIPolling()
     }
 
     private func handleLocationValue(_ data: Data) {
@@ -350,6 +397,7 @@ extension ReceiverCentral: CBCentralManagerDelegate {
         isBluetoothAvailable = available
         switch central.state {
         case .poweredOn:
+            lastError = nil
             log.info("Bluetooth が利用可能になりました")
             if wantedScan {
                 startScanning()
@@ -390,12 +438,26 @@ extension ReceiverCentral: CBCentralManagerDelegate {
             discoveredSenders.append(sender)
             log.info("送信元を発見: \(name) (RSSI \(rssi) dBm)")
         }
+
+        // Auto-reconnect only to the sender the user allowed, and only while a
+        // reconnect is actually pending (review M10). A manual scan must not
+        // hijack the connection.
+        if isReconnectPending,
+           autoReconnect,
+           peripheral.identifier == lastSenderIdentifier,
+           !state.isConnected,
+           !isConnecting {
+            connect(peripheral: peripheral, name: name)
+        }
     }
 
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         let name = peripheral.name ?? lastSenderName ?? "P2P GPS"
+        lastError = nil
+        userInitiatedDisconnect = false
+        isReconnectPending = false
         updateState(.connected(name: name))
-        signalQuality = SignalQuality(rssi: -60)
+        startRSSIPolling()
         log.info("送信元 \(name) に接続しました。サービスを探索します")
         peripheral.discoverServices([BLEUUID.service])
     }
@@ -405,9 +467,14 @@ extension ReceiverCentral: CBCentralManagerDelegate {
         didFailToConnect peripheral: CBPeripheral,
         error: Error?
     ) {
-        reportError("送信元に接続できませんでした。近くに iPad があるか確認し、再試行してください。")
         resetPeripheralState()
         updateState(.idle)
+        if userInitiatedDisconnect {
+            userInitiatedDisconnect = false
+            log.info("ユーザー操作による接続キャンセル")
+            return
+        }
+        reportError("送信元に接続できませんでした。近くに iPad があるか確認し、再試行してください。")
         scheduleReconnectIfNeeded()
     }
 
@@ -420,6 +487,12 @@ extension ReceiverCentral: CBCentralManagerDelegate {
         resetPeripheralState()
         targetPeripheral = nil
         updateState(.idle)
+        if userInitiatedDisconnect {
+            userInitiatedDisconnect = false
+            isReconnectPending = false
+            log.info("ユーザー操作による切断のため自動再接続しません")
+            return
+        }
         scheduleReconnectIfNeeded()
     }
 }
