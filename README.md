@@ -1,5 +1,8 @@
 # P2P GPS for iOS / iPadOS
 
+[![CI](https://github.com/haruki0420/p2pgps-ios/actions/workflows/ci.yml/badge.svg)](https://github.com/haruki0420/p2pgps-ios/actions/workflows/ci.yml)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+
 iPhone（または Android）で取得した GPS 位置を **BLE GATT** で iPad に転送し、iPad 上で「その位置にいる」ように位置情報を反映するアプリです。クラウドを介さない P2P で、座標は端末外に送りません。
 
 - **Sender（iPhone）**: CoreLocation で現在地を取得し、BLE ペリフェラルとして 20 bytes の Location Packet を 1 Hz で notify します。
@@ -157,6 +160,13 @@ UI の視覚世界・トークン・anti-slop ルールの正本はリポジト�
 2. `bash scripts/fetch-vendor.sh` — ベンダーライブラリ取得 + SHA-256 検証
 3. `swift build --triple arm64-apple-ios17.0 --sdk $(xcrun --sdk iphoneos --show-sdk-path)` — iOS SDK に対する全モジュールのクロスビルド
 4. `brew install xcodegen` → `xcodegen generate` → `xcodebuild ... CODE_SIGNING_ALLOWED=NO build` — Xcode でのコンパイルと静的リンクまで検証
+
+## Wiki
+
+`wiki/` に GitHub Wiki 用の Markdown を用意しています。GitHub の仕様で Wiki の初回ページだけは手動作成が必要です。
+
+1. https://github.com/haruki0420/p2pgps-ios/wiki を開き「Create the first page」→ そのまま Save。
+2. `./scripts/publish-wiki.sh` を実行すると `wiki/*.md` が Wiki に同期されます。
 
 ## 既知の制約
 
