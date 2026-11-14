@@ -7,6 +7,7 @@
 //  SPDX-License-Identifier: AGPL-3.0-or-later
 //
 
+import Foundation
 import XCTest
 @testable import P2PGPSProtocol
 import P2PGPSCore

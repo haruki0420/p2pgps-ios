@@ -15,6 +15,7 @@
 //  and is covered by the boundary tests below.
 //
 
+import Foundation
 import XCTest
 @testable import P2PGPSProtocol
 import P2PGPSCore
@@ -170,7 +171,7 @@ final class LocationPacketVectorTests: XCTestCase {
             }
         }
         XCTAssertThrowsError(try LocationPacket.decode(Data(bytes))) { error in
-            XCTAssertEqual(error as? LocationPacketError, .latitudeOutOfRange(910_000_000))
+            XCTAssertEqual(error as? LocationPacketError, LocationPacketError.latitudeOutOfRange(910_000_000))
         }
     }
 
@@ -183,7 +184,7 @@ final class LocationPacketVectorTests: XCTestCase {
             }
         }
         XCTAssertThrowsError(try LocationPacket.decode(Data(bytes))) { error in
-            XCTAssertEqual(error as? LocationPacketError, .longitudeOutOfRange(-1_800_000_001))
+            XCTAssertEqual(error as? LocationPacketError, LocationPacketError.longitudeOutOfRange(-1_800_000_001))
         }
     }
 
@@ -234,9 +235,9 @@ final class LocationPacketVectorTests: XCTestCase {
             )
             XCTAssertThrowsError(try LocationPacket.decode(packet.encoded())) { error in
                 if latitude != 0 {
-                    XCTAssertEqual(error as? LocationPacketError, .latitudeOutOfRange(latitude))
+                    XCTAssertEqual(error as? LocationPacketError, LocationPacketError.latitudeOutOfRange(latitude))
                 } else {
-                    XCTAssertEqual(error as? LocationPacketError, .longitudeOutOfRange(longitude))
+                    XCTAssertEqual(error as? LocationPacketError, LocationPacketError.longitudeOutOfRange(longitude))
                 }
             }
         }
@@ -264,7 +265,7 @@ final class LocationPacketVectorTests: XCTestCase {
         var bytes = Array(LocationPacket.invalid.encoded())
         bytes[0] = 0x02
         XCTAssertThrowsError(try LocationPacket.decode(Data(bytes))) { error in
-            XCTAssertEqual(error as? LocationPacketError, .unsupportedVersion(0x02))
+            XCTAssertEqual(error as? LocationPacketError, LocationPacketError.unsupportedVersion(0x02))
         }
     }
 
@@ -272,16 +273,16 @@ final class LocationPacketVectorTests: XCTestCase {
         var bytes = Array(LocationPacket.invalid.encoded())
         bytes[1] = 0x80
         XCTAssertThrowsError(try LocationPacket.decode(Data(bytes))) { error in
-            XCTAssertEqual(error as? LocationPacketError, .reservedFlagSet(0x80))
+            XCTAssertEqual(error as? LocationPacketError, LocationPacketError.reservedFlagSet(0x80))
         }
     }
 
     func testInvalidLengthIsRejected() {
         XCTAssertThrowsError(try LocationPacket.decode(Data(repeating: 0, count: 19))) { error in
-            XCTAssertEqual(error as? LocationPacketError, .invalidLength(actual: 19))
+            XCTAssertEqual(error as? LocationPacketError, LocationPacketError.invalidLength(actual: 19))
         }
         XCTAssertThrowsError(try LocationPacket.decode(Data(repeating: 0, count: 21))) { error in
-            XCTAssertEqual(error as? LocationPacketError, .invalidLength(actual: 21))
+            XCTAssertEqual(error as? LocationPacketError, LocationPacketError.invalidLength(actual: 21))
         }
     }
 
@@ -430,12 +431,12 @@ final class ExtendedLocationPacketTests: XCTestCase {
 
     func testInvalidLengthAndVersion() {
         XCTAssertThrowsError(try ExtendedLocationPacket.decode(Data(repeating: 1, count: 7))) { error in
-            XCTAssertEqual(error as? ExtendedLocationPacketError, .invalidLength(actual: 7))
+            XCTAssertEqual(error as? ExtendedLocationPacketError, ExtendedLocationPacketError.invalidLength(actual: 7))
         }
         var bytes = Array(ExtendedLocationPacket.invalid.encoded())
         bytes[0] = 0x02
         XCTAssertThrowsError(try ExtendedLocationPacket.decode(Data(bytes))) { error in
-            XCTAssertEqual(error as? ExtendedLocationPacketError, .unsupportedVersion(0x02))
+            XCTAssertEqual(error as? ExtendedLocationPacketError, ExtendedLocationPacketError.unsupportedVersion(0x02))
         }
     }
 }
@@ -479,28 +480,28 @@ final class ControlCommandTests: XCTestCase {
 
     func testUnknownOpcode() {
         XCTAssertThrowsError(try ControlCommand.decode(Data([0x10]))) { error in
-            XCTAssertEqual(error as? ControlCommandError, .unknownOpcode(0x10))
+            XCTAssertEqual(error as? ControlCommandError, ControlCommandError.unknownOpcode(0x10))
         }
         XCTAssertThrowsError(try ControlCommand.decode(Data([0x42, 0x00]))) { error in
-            XCTAssertEqual(error as? ControlCommandError, .unknownOpcode(0x42))
+            XCTAssertEqual(error as? ControlCommandError, ControlCommandError.unknownOpcode(0x42))
         }
     }
 
     func testBadLength() {
         XCTAssertThrowsError(try ControlCommand.decode(Data([0x01, 0xE8]))) { error in
-            XCTAssertEqual(error as? ControlCommandError, .badLength(opcode: 0x01, expected: 3, actual: 2))
+            XCTAssertEqual(error as? ControlCommandError, ControlCommandError.badLength(opcode: 0x01, expected: 3, actual: 2))
         }
         XCTAssertThrowsError(try ControlCommand.decode(Data([0x02, 0x00]))) { error in
-            XCTAssertEqual(error as? ControlCommandError, .badLength(opcode: 0x02, expected: 1, actual: 2))
+            XCTAssertEqual(error as? ControlCommandError, ControlCommandError.badLength(opcode: 0x02, expected: 1, actual: 2))
         }
         XCTAssertThrowsError(try ControlCommand.decode(Data([0x05]))) { error in
-            XCTAssertEqual(error as? ControlCommandError, .badLength(opcode: 0x05, expected: 2, actual: 1))
+            XCTAssertEqual(error as? ControlCommandError, ControlCommandError.badLength(opcode: 0x05, expected: 2, actual: 1))
         }
     }
 
     func testEmptyWrite() {
         XCTAssertThrowsError(try ControlCommand.decode(Data())) { error in
-            XCTAssertEqual(error as? ControlCommandError, .empty)
+            XCTAssertEqual(error as? ControlCommandError, ControlCommandError.empty)
         }
     }
 
@@ -546,12 +547,12 @@ final class SenderStatusTests: XCTestCase {
 
     func testInvalidLengthAndVersion() {
         XCTAssertThrowsError(try SenderStatus.decode(Data(repeating: 1, count: 7))) { error in
-            XCTAssertEqual(error as? SenderStatusError, .invalidLength(actual: 7))
+            XCTAssertEqual(error as? SenderStatusError, SenderStatusError.invalidLength(actual: 7))
         }
         var bytes = Array(SenderStatus.idle.encoded())
         bytes[0] = 0x09
         XCTAssertThrowsError(try SenderStatus.decode(Data(bytes))) { error in
-            XCTAssertEqual(error as? SenderStatusError, .unsupportedVersion(0x09))
+            XCTAssertEqual(error as? SenderStatusError, SenderStatusError.unsupportedVersion(0x09))
         }
     }
 

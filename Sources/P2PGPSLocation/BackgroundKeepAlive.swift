@@ -11,6 +11,10 @@
 //  supposed to stay alive. This is the same technique TLocation uses; it never
 //  drives the map or the injected coordinate.
 //
+//  This target also builds for macOS during `swift test`, so iOS-only APIs are
+//  behind `#if os(iOS)` and authorization checks use
+//  `CLAuthorizationStatus.p2pIsAuthorized`.
+//
 
 import Combine
 import CoreLocation
@@ -41,15 +45,13 @@ public final class BackgroundKeepAlive: NSObject, ObservableObject {
 
     /// Starts the keep-alive session, requesting authorization if needed.
     public func start() {
-        switch manager.authorizationStatus {
-        case .notDetermined:
+        let status = manager.authorizationStatus
+        if status == .notDetermined {
             manager.requestAlwaysAuthorization()
-        case .authorizedAlways, .authorizedWhenInUse:
+        } else if status.p2pIsAuthorized {
             begin()
-        case .denied, .restricted:
+        } else {
             log.warning("バックグラウンド維持用の位置情報が許可されていません")
-        @unknown default:
-            break
         }
     }
 
@@ -72,12 +74,12 @@ public final class BackgroundKeepAlive: NSObject, ObservableObject {
 extension BackgroundKeepAlive: CLLocationManagerDelegate {
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
+        // `.authorizedAlways` exists on both iOS and macOS; the "when in use"
+        // case is checked through `p2pIsAuthorized` so this file compiles on
+        // macOS as well.
         if isRunning || manager.authorizationStatus == .authorizedAlways {
-            switch manager.authorizationStatus {
-            case .authorizedAlways, .authorizedWhenInUse:
+            if manager.authorizationStatus.p2pIsAuthorized {
                 begin()
-            default:
-                break
             }
         }
     }

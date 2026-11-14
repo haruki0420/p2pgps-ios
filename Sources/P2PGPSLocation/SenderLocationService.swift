@@ -11,6 +11,11 @@
 //  session while sending, and publishes platform-independent `GPSFix` values so
 //  the BLE layer never sees CoreLocation types.
 //
+//  This target also builds for macOS during `swift test`, so every iOS-only
+//  CoreLocation API is behind `#if os(iOS)` and authorization checks go through
+//  `CLAuthorizationStatus.p2pIsAuthorized` (see
+//  `CLAuthorizationStatus+Platform.swift`).
+//
 
 import Combine
 import CoreLocation
@@ -88,17 +93,15 @@ public final class SenderLocationService: NSObject, ObservableObject {
     /// Requests authorization if needed and starts continuous updates.
     public func start() {
         wantsUpdates = true
-        switch manager.authorizationStatus {
-        case .notDetermined:
+        let status = manager.authorizationStatus
+        if status == .notDetermined {
             log.info("位置情報の許可を要求します")
             manager.requestAlwaysAuthorization()
-        case .authorizedAlways, .authorizedWhenInUse:
+        } else if status.p2pIsAuthorized {
             beginUpdates()
-        case .denied, .restricted:
+        } else {
             lastError = "位置情報の使用が許可されていません。設定 > プライバシーとセキュリティ > 位置情報サービスで許可してください。"
             log.error(lastError ?? "")
-        @unknown default:
-            break
         }
     }
 
@@ -112,8 +115,7 @@ public final class SenderLocationService: NSObject, ObservableObject {
 
     /// Requests a single fix (used by REQUEST_FIX and by the manual refresh).
     public func requestOneShot() {
-        guard manager.authorizationStatus == .authorizedAlways
-            || manager.authorizationStatus == .authorizedWhenInUse else {
+        guard manager.authorizationStatus.p2pIsAuthorized else {
             start()
             return
         }
@@ -137,15 +139,10 @@ public final class SenderLocationService: NSObject, ObservableObject {
     private func publishAuthorization(_ status: CLAuthorizationStatus) {
         guard status != authorizationStatus else { return }
         authorizationStatus = status
-        switch status {
-        case .authorizedAlways, .authorizedWhenInUse:
+        if status.p2pIsAuthorized {
             if wantsUpdates { beginUpdates() }
-        case .denied, .restricted:
+        } else if status == .denied || status == .restricted {
             lastError = "位置情報の使用が許可されていません。設定 > プライバシーとセキュリティ > 位置情報サービスで許可してください。"
-        case .notDetermined:
-            break
-        @unknown default:
-            break
         }
     }
 

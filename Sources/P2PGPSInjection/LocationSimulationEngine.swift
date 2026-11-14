@@ -23,6 +23,7 @@
 //
 
 import Combine
+import Darwin
 import Foundation
 #if SWIFT_PACKAGE
 import P2PGPSCore
