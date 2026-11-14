@@ -33,7 +33,8 @@ final class FixFilterTests: XCTestCase {
         var filter = FixFilter()
         let fix = makeFix(latitude: 35.681236, longitude: 139.767125)
         guard case .accepted(let accepted) = filter.process(fix) else {
-            return XCTFail("最初の fix は受理されるべき")
+            XCTFail("最初の fix は受理されるべき")
+            return
         }
         XCTAssertEqual(accepted.latitude, 35.681236, accuracy: 1e-9)
         XCTAssertEqual(filter.acceptedCount, 1)
@@ -44,7 +45,8 @@ final class FixFilterTests: XCTestCase {
         var filter = FixFilter()
         let nullIsland = makeFix(latitude: 0, longitude: 0)
         guard case .rejected(.invalidCoordinate) = filter.process(nullIsland) else {
-            return XCTFail("Null Island は拒否されるべき")
+            XCTFail("Null Island は拒否されるべき")
+            return
         }
         XCTAssertEqual(filter.rejectedCount, 1)
     }
@@ -53,7 +55,8 @@ final class FixFilterTests: XCTestCase {
         var filter = FixFilter()
         let fix = makeFix(latitude: 35.0, longitude: 139.0, accuracy: 500)
         guard case .rejected(.poorAccuracy(let accuracy)) = filter.process(fix) else {
-            return XCTFail("精度の悪い fix は拒否されるべき")
+            XCTFail("精度の悪い fix は拒否されるべき")
+            return
         }
         XCTAssertEqual(accuracy, 500)
     }
@@ -63,12 +66,14 @@ final class FixFilterTests: XCTestCase {
         let now = Date()
         let first = makeFix(latitude: 35.0, longitude: 139.0, timestamp: now)
         guard case .accepted = filter.process(first) else {
-            return XCTFail("最初の fix は受理されるべき")
+            XCTFail("最初の fix は受理されるべき")
+            return
         }
         // ~1 km in one second is far above the 120 m/s limit.
         let jump = makeFix(latitude: 35.01, longitude: 139.0, timestamp: now.addingTimeInterval(1))
         guard case .rejected(.implausibleJump) = filter.process(jump) else {
-            return XCTFail("瞬間移動は拒否されるべき")
+            XCTFail("瞬間移動は拒否されるべき")
+            return
         }
     }
 
@@ -77,7 +82,8 @@ final class FixFilterTests: XCTestCase {
         let old = Date().addingTimeInterval(-25 * 60 * 60)
         let fix = makeFix(latitude: 35.0, longitude: 139.0, timestamp: old)
         guard case .rejected(.stale) = filter.process(fix) else {
-            return XCTFail("24 時間以上前の fix は拒否されるべき")
+            XCTFail("24 時間以上前の fix は拒否されるべき")
+            return
         }
     }
 
@@ -88,7 +94,8 @@ final class FixFilterTests: XCTestCase {
         _ = filter.process(first)
         let second = makeFix(latitude: 35.001, longitude: 139.0, timestamp: now.addingTimeInterval(1))
         guard case .accepted(let smoothed) = filter.process(second) else {
-            return XCTFail("2 つ目の fix は受理されるべき")
+            XCTFail("2 つ目の fix は受理されるべき")
+            return
         }
         XCTAssertGreaterThan(smoothed.latitude, 35.0)
         XCTAssertLessThan(smoothed.latitude, 35.001)
@@ -119,7 +126,8 @@ final class AppSettingsTests: XCTestCase {
     func testSettingsStoreRoundTrip() {
         let suiteName = "p2pgps.tests.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suiteName) else {
-            return XCTFail("UserDefaults suite を作成できません")
+            XCTFail("UserDefaults suite を作成できません")
+            return
         }
         defer { defaults.removePersistentDomain(forName: suiteName) }
 

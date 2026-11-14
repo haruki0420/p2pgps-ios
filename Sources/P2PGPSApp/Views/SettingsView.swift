@@ -8,6 +8,7 @@
 //
 
 #if canImport(UIKit)
+import Foundation
 import SwiftUI
 import UIKit
 #if SWIFT_PACKAGE

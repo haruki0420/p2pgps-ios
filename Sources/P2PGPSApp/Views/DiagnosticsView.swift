@@ -11,6 +11,7 @@
 //
 
 #if canImport(UIKit)
+import Foundation
 import SwiftUI
 #if SWIFT_PACKAGE
 import P2PGPSCore
