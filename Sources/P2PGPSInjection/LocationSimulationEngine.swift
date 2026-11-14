@@ -292,8 +292,11 @@ private let locationClearSettleInterval: TimeInterval = 0.3
 /// Clears the simulated location. Must run on `LocationSimulationCommandQueue`.
 func clear_simulated_location() -> Int32 {
     guard let locationSimulation = LocationSimulationState.locationSimulation else {
-        LogStore.shared.error(
-            "clear_simulated_location 失敗 (code \(LocationSimulationStatus.locationClear)): クリアすべきセッションがありません"
+        // Not an error: `clear()` is always enqueued (review R-1), so "there is
+        // no session to clear" is a normal outcome and must not spam the error
+        // log (review R-16).
+        LogStore.shared.info(
+            "clear_simulated_location: セッションなし（成功扱い）"
         )
         return LocationSimulationStatus.locationClear
     }

@@ -59,11 +59,16 @@ final class ReceiverController: ObservableObject {
     private var lastURLSchemeDelegation = Date.distantPast
     private var isKeepAliveRunning = false
     private var shouldAttemptTunnelReconnect = false
-    /// Whether this process has ever asked the engine / TLocation to simulate a
-    /// coordinate. `stopInjectionSession()` only sends a device clear when this
-    /// is true (or a session is known to exist), so toggling injection OFF
-    /// before any fix does not produce a spurious FFI error (review R-1).
-    private var hasRequestedSimulation = false
+    /// Which backends this process has asked to simulate a coordinate on.
+    ///
+    /// Tracked per backend (not as one flag) because the setting can change
+    /// while injection is ON: switching "TLocation の URL スキームに委譲" must
+    /// still clear the backend that was used before the switch (review R-15).
+    /// `stopInjectionSession()` / `handleBackendChange()` only send a clear for
+    /// a backend that was actually requested, so toggling injection OFF before
+    /// any fix does not produce a spurious FFI error (review R-1).
+    private var requestedEmbeddedSimulation = false
+    private var requestedURLSchemeSimulation = false
     private let maximumTrailPoints = 120
     private let log = LogStore.shared
 
@@ -96,18 +101,25 @@ final class ReceiverController: ObservableObject {
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] message in
-                self?.errorMessage = message
+                guard let self else { return }
+                self.errorMessage = message
                 // A failed FFI call means the device session is gone; the
                 // toggle must not keep claiming "injecting" (review L-3).
-                self?.isInjecting = false
+                // While the URL-scheme backend is active, an embedded-engine
+                // clear/error must not drop the URL backend's state (R-15).
+                if !self.settings.useTLocationURLSchemeFallback {
+                    self.isInjecting = false
+                }
             }
             .store(in: &cancellables)
 
         engine.$isSimulating
             .receive(on: DispatchQueue.main)
             .sink { [weak self] simulating in
-                if !simulating {
-                    self?.isInjecting = false
+                guard let self, !simulating else { return }
+                // Same backend guard as above (review R-15).
+                if !self.settings.useTLocationURLSchemeFallback {
+                    self.isInjecting = false
                 }
             }
             .store(in: &cancellables)
@@ -143,6 +155,16 @@ final class ReceiverController: ObservableObject {
             .sink { [weak self] enabled in
                 guard let self, self.central.state.isConnected else { return }
                 self.central.setExtendedEnabled(enabled)
+            }
+            .store(in: &cancellables)
+
+        // Switching the injection backend while injection is ON must clear the
+        // old backend before resuming on the new one (review R-15).
+        settings.$useTLocationURLSchemeFallback
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.handleBackendChange()
             }
             .store(in: &cancellables)
 
@@ -238,26 +260,59 @@ final class ReceiverController: ObservableObject {
 
     /// Stops the device session without changing the user's preference.
     ///
-    /// The FFI clear is sent whenever a simulation was requested, even if the
-    /// engine has not finished `set()` yet: "injection ON → OFF immediately"
-    /// must still clear the device-side session (review R-1).
+    /// Every backend that was actually used is cleared independently of the
+    /// current setting, so switching the backend while injection is ON cannot
+    /// leave the other backend's session behind (review R-15). The clear is
+    /// sent whenever a simulation was requested, even if the engine has not
+    /// finished `set()` yet: "injection ON → OFF immediately" must still clear
+    /// the device-side session (review R-1).
     private func stopInjectionSession() {
         isInjecting = false
         lastInjectedCoordinate = nil
         lastInjectedAt = nil
         updateKeepAliveState()
+        clearRequestedBackends()
+    }
 
-        let needsDeviceClear = hasRequestedSimulation
+    /// Clears every backend this process asked to simulate on.
+    ///
+    /// The setting may have changed since the request, so this must not look at
+    /// `settings.useTLocationURLSchemeFallback` to pick one backend: the
+    /// embedded engine and the URL-scheme delegation are cleared independently
+    /// (review R-15).
+    private func clearRequestedBackends() {
+        let needsEmbeddedClear = requestedEmbeddedSimulation
             || engine.isSimulating
             || engine.sessionOpen
             || engine.isWorking
-        hasRequestedSimulation = false
+        let needsURLClear = requestedURLSchemeSimulation
+        requestedEmbeddedSimulation = false
+        requestedURLSchemeSimulation = false
 
-        guard needsDeviceClear else { return }
-        if settings.useTLocationURLSchemeFallback {
-            URLSchemeLocationFallback.clear()
-        } else {
+        if needsEmbeddedClear {
             engine.clear()
+        }
+        if needsURLClear {
+            URLSchemeLocationFallback.clear()
+        }
+    }
+
+    /// The injection backend was switched in Settings.
+    ///
+    /// Clear the backend that was in use (so the device does not keep the old
+    /// session), then resume with the new backend if injection is still ON
+    /// (review R-15).
+    private func handleBackendChange() {
+        let wasInjecting = wantsInjection
+        // Force the next `inject` to go through instead of being skipped as a
+        // redundant update.
+        lastInjectedCoordinate = nil
+        lastURLSchemeDelegation = .distantPast
+        clearRequestedBackends()
+
+        guard wasInjecting else { return }
+        if let fix = central.latestFix, fix.isUsable {
+            inject(fix)
         }
     }
 
@@ -305,7 +360,7 @@ final class ReceiverController: ObservableObject {
             let now = Date()
             guard now.timeIntervalSince(lastURLSchemeDelegation) >= 1.0 else { return }
             lastURLSchemeDelegation = now
-            hasRequestedSimulation = true
+            requestedURLSchemeSimulation = true
             isInjecting = true
             lastInjectedAt = now
             // `UIApplication.open` only tells us whether the URL was handed to
@@ -338,7 +393,7 @@ final class ReceiverController: ObservableObject {
         lastInjectedCoordinate = CLLocationCoordinate2D(latitude: fix.latitude, longitude: fix.longitude)
         lastInjectedAt = Date()
         isInjecting = true
-        hasRequestedSimulation = true
+        requestedEmbeddedSimulation = true
         engine.set(latitude: fix.latitude, longitude: fix.longitude)
         // Coordinates are logged only at the user's configured precision
         // (review M13 / spec §8).
