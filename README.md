@@ -39,7 +39,7 @@ iPhone（または Android）で取得した GPS 位置を **BLE GATT** で iPad
 
 ## SideStore / AltStore ソース（自動更新）
 
-`source/apps.json` は SideStore / AltStore のソース形式です。リポジトリを public にするか公開用リポジトリにミラーすると、SideStore の Sources に次の URL を追加するだけで、新バージョンが自動で一覧に表示されます。
+`source/apps.json` は SideStore / AltStore のソース形式です。SideStore の Sources に次の URL を追加するだけで、新バージョンが自動で一覧に表示されます。
 
 ```
 https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json

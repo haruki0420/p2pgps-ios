@@ -10,37 +10,21 @@ P2P GPS を **SideStore / AltStore のソース**に追加すると、新しい�
 - `scripts/generate_source.py` が GitHub Release から自動生成します。
 - `.github/workflows/update-source.yml` が **Release IPA ワークフローの成功後**に `source/apps.json` を更新して `main` にコミットします。
 
-## 公開 URL が必要です
+## 公開 URL（設定済み）
 
-SideStore はソースを **認証なしの公開 URL** から取得します。リポジトリが private のままだと `raw.githubusercontent.com` の URL にアクセスできないため、次のいずれかが必要です。
+`p2pgps-ios` リポジトリは public です。SideStore → Sources → **+** で次を追加してください。
 
-### 方法 A: `p2pgps-ios` を public にする（最も簡単）
+```
+https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
+```
 
-1. リポジトリを public に変更
-2. SideStore → Sources → **+** → 次を追加:
+- ソースに P2P GPS が表示され、リリースごとに新バージョンが出ます。
+- IPA も GitHub Release からそのまま取得できます（未署名。SideStore が Apple ID で署名します）。
+- AGPL-3.0 のソース提供義務も public リポジトリで満たしています。
 
-   ```
-   https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
-   ```
+### 代替: 公開用リポジトリ / GitHub Pages
 
-3. ソースに P2P GPS が表示され、リリースごとに新バージョンが出ます。
-
-> AGPL-3.0 のアプリを配布する場合、バイナリの受領者に対応するソースを提供する必要があります。public リポジトリはこれを満たします。
-
-### 方法 B: 公開用の `p2pgps-source` リポジトリを作る
-
-ソースコードを private のままにしたい場合は、公開専用の小さなリポジトリを作ります。
-
-1. public リポジトリ `p2pgps-source` を作成
-2. `source/apps.json` をそこにコピー（CI から push する場合は `SOURCE_REPO_TOKEN` を追加）
-3. IPA も公開する必要があります。GitHub Release のアセットは private リポジトリだと取得できないため、`p2pgps-source` の Release に IPA をアップロードするか、GitHub Pages などに置きます
-4. SideStore に `https://raw.githubusercontent.com/haruki0420/p2pgps-source/main/apps.json` を追加
-
-> AGPL のソース提供義務を満たすため、`p2pgps-source` の Release にソース tarball を添付するか、ソースコードも公開してください。
-
-### 方法 C: GitHub Pages
-
-public リポジトリの GitHub Pages に `apps.json` を置き、その URL を SideStore に追加します。方法 A/B と組み合わせて使えます。
+ソースコードを private に戻したい場合は、公開専用の `p2pgps-source` リポジトリを作り、`source/apps.json` と IPA をそこへミラーする方法もあります（CI から push する場合は `SOURCE_REPO_TOKEN` が必要）。GitHub Pages に `apps.json` を置く方法でも構いません。
 
 ## 更新の自動化の範囲
 

@@ -4,7 +4,7 @@
   "subtitle": "iPhone / Android の GPS を iPad に届ける",
   "description": "iPhone または Android で取得した位置情報を Bluetooth で iPad に送り、iPad 自身の位置として反映するアプリです。iPad 側は LocalDevVPN + pairing file + DDI を使って位置シミュレーションを行います。",
   "iconURL": "https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/Resources/AppIcon.png",
-  "website": "https://github.com/haruki0420/p2pgps",
+  "website": "https://github.com/haruki0420/p2pgps-ios",
   "tintColor": "#2F6B4F",
   "featuredApps": [
     "jp.haruki0420.p2pgps"
