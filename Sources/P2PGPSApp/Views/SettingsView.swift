@@ -143,12 +143,12 @@ struct SettingsView: View {
             Button {
                 if PairingFileStore.importFromDocumentsIfPresent() {
                     pairingPresent = true
-                    infoMessage = "Documents に置かれた pairing file を読み込みました。"
+                    infoMessage = "アプリのフォルダに置かれた pairing file を読み込みました。"
                 } else {
-                    infoMessage = "Documents に pairing file が見つかりません。"
+                    infoMessage = "アプリのフォルダに pairing file が見つかりません。"
                 }
             } label: {
-                Label("Documents から再読み込み", systemImage: "arrow.clockwise")
+                Label("ファイルを選び直す", systemImage: "arrow.clockwise")
             }
 
             if pairingPresent {
@@ -168,7 +168,7 @@ struct SettingsView: View {
             HStack {
                 Text("Developer Disk Image")
                 Spacer()
-                Text(mounting.isDeveloperDiskImageMounted ? "マウント済み" : "未マウント")
+                Text(mounting.isDeveloperDiskImageMounted ? "準備済み" : "未準備")
                     .font(P2PFont.metric)
                     .foregroundStyle(mounting.isDeveloperDiskImageMounted ? P2PColor.pine : P2PColor.inkSecondary)
             }
@@ -190,7 +190,7 @@ struct SettingsView: View {
             Button {
                 MountingProgress.shared.mountIfNeeded()
             } label: {
-                Label("DDI をマウント", systemImage: "externaldrive.badge.checkmark")
+                Label("DDI を使える状態にする", systemImage: "externaldrive.badge.checkmark")
             }
 
             if let ddiProgress {
@@ -302,7 +302,7 @@ struct SettingsView: View {
                 Spacer()
                 Text("AGPL-3.0").font(P2PFont.metric)
             }
-            Text("位置注入エンジンは StikDebug / TLocation（AGPL-3.0）由来です。詳細はリポジトリの NOTICE を参照してください。")
+            Text("位置の書き換え機能は StikDebug / TLocation（AGPL-3.0）由来です。")
                 .font(P2PFont.caption)
                 .foregroundStyle(P2PColor.inkSecondary)
             Text("iPad 側は Developer Mode / LocalDevVPN / pairing file / DDI が必要です。")
@@ -338,7 +338,7 @@ struct SettingsView: View {
                 try PairingFileStore.importFromPicker(url)
                 pairingPresent = true
                 errorMessage = nil
-                infoMessage = "pairing file を読み込みました。トンネルを再試行します。"
+                infoMessage = "pairing file を読み込みました。iPad 内部への接続をやり直します。"
                 TunnelManager.shared.start()
             } catch {
                 errorMessage = "pairing file を読み込めませんでした。ファイルを選び直してください。\n(\(error.localizedDescription))"
@@ -369,7 +369,7 @@ struct SettingsView: View {
                 }
                 isDownloadingDDI = false
                 ddiProgress = nil
-                ddiMessage = "DDI の準備ができました。マウントします。"
+                ddiMessage = "DDI の準備ができました。使える状態にします。"
                 MountingProgress.shared.mountIfNeeded()
             } catch {
                 isDownloadingDDI = false

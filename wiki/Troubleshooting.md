@@ -1,110 +1,47 @@
-# トラブルシューティング
+# 困ったとき
 
-症状から原因を探してください。エラーメッセージは「何が起きたか + どう直すか」の 2 文で表示されます。
+## まず確認すること
 
-## 送信元（iPhone）が見つからない
+1. 送信側で「送信を開始」を押しているか
+2. iPad の Bluetooth が ON か
+3. 2 台を近く（数 m 以内）に置いているか
+4. iPad で LocalDevVPN が接続済みか
+5. iPad で Developer Mode が ON か
 
-- iPhone 側で「送信を開始」を押しているか確認。
-- 両方の端末で Bluetooth が ON か確認。
-- 近距離（数 m 以内）に置く。BLE は壁や人体の影響を受けます。
-- iPad 側で「スキャン開始」を押し直す。
-- iPhone の画面がロック中でも、CoreBluetooth のバックグラウンドモードでアドバタイズは継続しますが、iOS の制約で見えにくくなることがあります。一度アプリを前面に出してください。
+## 送信元が見つからない
+
+- 送信側で「送信を開始」を押す。
+- iPad で「スキャン開始」を押し直す。
+- 送信側のアプリを画面の前に出す。
+- 他の Bluetooth アプリ（StikDebug / TLocation など）を終了する。
 
 ## 接続できない / すぐ切れる
 
-- 送信側のアプリが前面にあるか確認。
-- iPad の「設定」→「自動再接続」が ON か確認。
-- 他の BLE アプリ（StikDebug / TLocation 等）が同時に接続していないか確認。v1 は同時 1 台接続です。
+- 送信側のアプリを画面の前に出す。
+- iPad の設定で「自動再接続」が ON か確認する。
+- Bluetooth を OFF/ON してから再試行する。
 
-## トンネル接続に失敗する（Receiver）
+## 位置が反映されない
 
-まず **診断** 画面 →「接続診断を実行」を押してください。次の項目を自動で確認します。
+1. iPad で「位置情報を反映」が ON か確認する。
+2. 送信側が現在地を測位できているか確認する（屋内では時間がかかります）。
+3. 設定で DDI が「準備済み」か確認する。
+4. 「困ったとき」画面で「確認を実行」を押す。
 
-- pairing file が RPPairing 形式か（lockdown のみのファイルでは接続できません）
-- Wi-Fi に接続しているか
-- Remote Pairing ポート（Bonjour で自動検出。失敗時は 49152）に TCP 接続できるか
+## pairing file が通らない
 
-結果と「トンネル / DDI」セクションの **FFI エラー**（code とメッセージ）が原因特定の手がかりになります。
+- 設定で pairing file を読み込み直す。
+- iOS 27 では、iloader の pairing file が通らないことがあります。**`idevice_pair--windows-x86_64`（Windows x86_64 版）** で作り直してください。
+- 手順: [idevice_pair](https://github.com/jkcoxson/idevice_pair/releases) → Remote pairing → Create → Validate → Save to file → アプリで読み込み直す。
 
-| 症状 / 診断結果 | 対処 |
-| :--- | :--- |
-| pairing file が「lockdown のみ」 | iloader でエクスポートし直す（RPPairing を含むファイル） |
-| Wi-Fi が「接続されていない」 | Wi-Fi に接続する（RSD は Wi-Fi 接続中のみ開放） |
-| TCP が「接続待ち / 失敗」 | LocalDevVPN が接続済みか、他の VPN が有効でないか確認。Developer Mode が ON か確認。ローカルネットワークの許可を確認 |
-| 「Remote Pairing ポート」が Fallback になる | 設定 > プライバシーとセキュリティ > ローカルネットワーク で P2P GPS を ON にして、アプリを再起動 |
-| ポートが使用中 | 他の VPN / デバッグアプリを閉じ、LocalDevVPN を再接続。改善しなければ iPad を再起動 |
-| 接続タイムアウト | Wi-Fi と LocalDevVPN が接続されているか確認。iPad をスリープ解除 |
-| 経路がない | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON |
-| ターゲット IP が不正 | 設定のターゲット IP を `10.7.0.1` に戻す |
-| LocalDevVPN が使えない / 他の VPN と競合する | Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [Networking（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/wiki/Networking) を参照してください。 |
+## 詳しい情報（開発者向け）
 
-> iOS で同時に使える VPN は 1 つだけです。LocalDevVPN を有効にすると他の VPN は切断されます。Wi-Fi 接続と Developer Mode も必要です（RSD / lockdownd の仕様）。
+- 接続の確認は「困ったとき」画面の「確認を実行」で行えます。
+- 技術的なエラーは同じ画面の「動作記録」に残ります。
+- ビルドで `libidevice_ffi.a` が無い場合は `./scripts/fetch-vendor.sh` を実行します（Windows は `scripts/fetch-vendor.ps1`）。
 
-## pairing file が無効 / 読み込めない
+## 既知の制約
 
-- pairing file はこの iPad 自身のものです。別の端末のものは使えません。
-- **iloader** で「Delete Stored Pairing」→ デバイスで Trust →「Manage Pairing File」→「Place」→ 再度エクスポート → 本アプリで再インポート、の順で復旧してください。
-- それでも直らない場合は、**idevice_pair の Windows x86_64 版（`idevice_pair--windows-x86_64`）** で RPPairing を作り直してください。iOS 27.2 の実機では iloader では直らず、こちらで成功しています。
-- pairing file は Apple 側の都合でランダムに期限切れになることがあります。
-
-## iOS 27 で ConnectionReset（code 54）になる
-
-iOS 27 では、iloader の pairing file（lockdown + RPPairing の結合ファイル）が RSD ハンドシェイクで拒否されることがあります。
-
-> **実機での確認（2026-11-15、iOS 27.2 / Windows）**: iloader では `ConnectionReset` が解消せず、**`idevice_pair--windows-x86_64`（Windows x86_64 版）** で成功しました。
-
-1. [idevice_pair](https://github.com/jkcoxson/idevice_pair/releases) を起動（Windows は iTunes / usbmuxd が必要）。Windows は **x86_64 版**のアセットを使用
-2. デバイスを選択 → **Remote pairing** → **Create** → **Validate**
-3. **Save to file…** で保存 → 本アプリの Settings で古い pairing file を削除 → 新しいファイルをインポート
-4. 改善しない場合はアプリを完全に削除 → iPad を再起動 → 再インストール → 新しい pairing file をインポート
-
-## SideStore / アプリが起動しない・期限切れ
-
-- 無料の Apple ID では SideStore とインストールしたアプリは **7 日で期限切れ**になります。SideStore の「My Apps」で「7 DAYS」をタップして更新してください。
-- 「信頼されていない開発元」と表示される場合は、設定 > 一般 > VPN とデバイス管理 で開発元を信頼します。
-- 改善しない場合は iloader から SideStore / アプリを再インストールしてください。
-
-## iloader の「ペアリングファイルの管理」に P2P GPS が出ない
-
-- iloader v2.4.1 は対応アプリの一覧が固定で、P2P GPS はまだ一覧に含まれていません。**「エクスポート（非推奨）」** で pairing file を保存し、AirDrop / Files で iPad に置いて本アプリでインポートしてください。
-- 本アプリは Documents に置かれた pairing file を**アプリ起動時・フォアグラウンド復帰時・設定を開いたときに自動で読み込みます**（手動の場合は設定の「Documents から再読み込み」）。
-- 期限切れの可能性があるため、取得し直してください。
-- 設定でいったん削除してから再インポートすると確実です。
-- pairing file は秘密情報です。共有・コミットしないでください。
-
-## DDI がダウンロード / マウントできない
-
-- ネットワーク接続を確認（初回ダウンロードのみインターネットが必要）。
-- 「DDI を再取得」で削除 → 再ダウンロード。
-- 「SHA-256 が一致しません」と表示された場合は、検証に失敗したファイルをアプリが削除しています。ネットワークを確認して再取得してください。
-- LocalDevVPN が接続されているか確認してから「DDI をマウント」。
-- それでも失敗する場合は iPad を再起動し、トンネルを再試行してからマウント。
-
-## 注入は成功するが位置が元に戻る
-
-- 送信側のアプリがバックグラウンドで停止していないか確認。位置情報の「常に許可」を推奨。
-- 送信側の画面を消した直後に止まる場合は、iOS のバックグラウンド制約が原因です。アプリを前面に戻してください。
-- 受信側のライブバナーが消えていないか確認（消えていれば注入は停止しています）。
-- 受信側で注入 ON のまま画面を消す場合は、設定の「バックグラウンド維持（受信側）」が ON か確認してください（注入 ON の間は画面を離れても維持されます）。
-
-## アプリ再起動後に位置が元に戻らない
-
-- 前回のプロセスが残したデバイス側セッションはアプリからは消せません。iPad を再起動するか、注入を ON → OFF してから再試行してください。
-
-## 座標が表示されない / 「有効な位置をまだ受信していません」
-
-- 送信側が測位できているか確認（屋内では GPS が取れないことがあります）。
-- 送信側の「fix 品質」が 0 のままなら、屋外に出るか Wi-Fi を ON にしてください。
-- Null Island（0,0）付近の座標は仕様上「無効」として扱われます。
-
-## ログの確認方法
-
-「診断」画面で以下を確認できます。
-
-- 受信パケット数 / sequence 巻き戻り回数
-- 最終 Location / Status / Extended の hex
-- 注入セッションの状態（open/closed、適用座標、最終反映）
-- トンネル / DDI の状態
-- メモリ内ログ（共有ボタンでテキスト出力）
-
-不具合報告には「診断」のログ共有と、再現手順を添えてください。座標はログ設定の桁数に丸められます。
+- BLE 購読・位置注入は Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
+- iPad の位置変更は Apple の非公開機能に依存するため、OS の更新で動かなくなる可能性があります。
+- Bluetooth は 1 対 1 接続です。

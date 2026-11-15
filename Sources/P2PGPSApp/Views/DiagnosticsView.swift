@@ -120,12 +120,12 @@ private struct ReceiverDiagnosticsRows: View {
             DiagnosticRow(label: "状態", value: stateText)
             DiagnosticRow(label: "送信元", value: central.state.senderName ?? "—")
             DiagnosticRow(
-                label: "購読",
+                label: "受信登録",
                 value: "Location \(central.isLocationNotifying ? "ON" : "OFF") / " +
                     "Status \(central.isStatusNotifying ? "ON" : "OFF") / " +
                     "Extended \(central.isExtendedNotifying ? "ON" : "OFF")"
             )
-            DiagnosticRow(label: "電波", value: central.signalQuality.localizedDescription)
+            DiagnosticRow(label: "iPad 接続", value: central.signalQuality.localizedDescription)
             DiagnosticRow(label: "受信パケット数", value: "\(central.packetsReceived)")
             DiagnosticRow(label: "sequence 巻き戻り", value: "\(central.sequenceRewinds)")
             HexRow(label: "最終 Location Packet", hex: central.lastPacketHex)
@@ -152,8 +152,8 @@ private struct SenderDiagnosticsRows: View {
         Group {
             DiagnosticRow(label: "状態", value: peripheral.state.localizedDescription)
             DiagnosticRow(label: "ローカル名", value: peripheral.localName)
-            DiagnosticRow(label: "アドバタイズ", value: peripheral.isAdvertising ? "中" : "停止")
-            DiagnosticRow(label: "購読数", value: "\(peripheral.subscriberCount)")
+            DiagnosticRow(label: "見つけられる状態", value: peripheral.isAdvertising ? "公開中" : "停止")
+            DiagnosticRow(label: "受信中の iPad", value: "\(peripheral.subscriberCount)")
             DiagnosticRow(label: "最終 Control", value: peripheral.lastControlCommand.map { "\($0)" } ?? "—")
             if let error = peripheral.lastError {
                 Text(error)
@@ -172,7 +172,7 @@ private struct InjectionDiagnosticsRows: View {
             DiagnosticRow(label: "シミュレーション", value: engine.isSimulating ? "実行中" : "停止")
             DiagnosticRow(label: "FFI セッション", value: engine.sessionOpen ? "open" : "closed")
             DiagnosticRow(label: "処理中", value: engine.isWorking ? "yes" : "no")
-            DiagnosticRow(label: "DDI", value: engine.isDeveloperDiskImageMounted ? "マウント済み" : "未マウント")
+            DiagnosticRow(label: "DDI", value: engine.isDeveloperDiskImageMounted ? "準備済み" : "未準備")
             DiagnosticRow(label: "適用座標", value: appliedCoordinateText)
             DiagnosticRow(
                 label: "最終反映",
@@ -209,13 +209,13 @@ private struct TunnelDiagnosticsRows: View {
 
     var body: some View {
         Group {
-            DiagnosticRow(label: "トンネル", value: tunnel.isConnected ? "接続済み" : (tunnel.isStarting ? "接続中" : "未接続"))
+            DiagnosticRow(label: "iPad 内部への接続", value: tunnel.isConnected ? "接続済み" : (tunnel.isStarting ? "接続中" : "未接続"))
             DiagnosticRow(label: "ターゲット", value: RemotePairingPortResolver.lastAttemptDescription)
-            DiagnosticRow(label: "DDI マウント", value: mounting.isDeveloperDiskImageMounted ? "済み" : "未")
+            DiagnosticRow(label: "DDI の準備", value: mounting.isDeveloperDiskImageMounted ? "済み" : "未")
             Button {
                 TunnelManager.shared.start()
             } label: {
-                Label("トンネルを再試行", systemImage: "arrow.clockwise")
+                Label("再接続", systemImage: "arrow.clockwise")
             }
             .disabled(tunnel.isStarting)
             if let technical = tunnel.lastTechnicalError {
@@ -250,7 +250,7 @@ private struct ConnectionDiagnosticsRows: View {
             Button {
                 diagnostics.run()
             } label: {
-                Label(diagnostics.isRunning ? "診断中…" : "接続診断を実行", systemImage: "stethoscope")
+                Label(diagnostics.isRunning ? "確認中…" : "確認を実行", systemImage: "stethoscope")
             }
             .disabled(diagnostics.isRunning)
 

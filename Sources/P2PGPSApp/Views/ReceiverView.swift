@@ -78,7 +78,7 @@ struct ReceiverView: View {
                 } label: {
                     Image(systemName: "waveform.path.ecg")
                 }
-                .accessibilityLabel("診断")
+                .accessibilityLabel("困ったとき")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -206,7 +206,7 @@ struct ReceiverView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "clock.badge.exclamationmark")
                         .foregroundStyle(P2PColor.amber)
-                    Text("送信側の時刻が 24 時間以上ずれています。")
+                    Text("位置情報が古すぎます（24 時間以上前）。送信側の時刻設定を確認し、もう一度送信してください。")
                         .font(P2PFont.caption)
                         .foregroundStyle(P2PColor.inkSecondary)
                 }

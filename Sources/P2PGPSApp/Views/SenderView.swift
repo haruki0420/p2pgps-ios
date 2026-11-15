@@ -84,7 +84,7 @@ struct SenderView: View {
                 } label: {
                     Image(systemName: "waveform.path.ecg")
                 }
-                .accessibilityLabel("診断")
+                .accessibilityLabel("困ったとき")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

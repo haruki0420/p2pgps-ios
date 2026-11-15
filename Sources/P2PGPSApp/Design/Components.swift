@@ -73,7 +73,7 @@ struct SignalBars: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("電波強度 \(quality.localizedDescription)")
+        .accessibilityLabel("iPad 接続あり \(quality.localizedDescription)")
     }
 }
 
@@ -475,7 +475,7 @@ struct FixQualityBars: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("fix 品質 \(level) / 4")
+        .accessibilityLabel("測位の精度 \(level) / 4")
     }
 
     /// Maps a horizontal accuracy in metres to 0–4.

@@ -27,5 +27,5 @@ iPhone の現在地を Bluetooth で iPad に送り、iPad の位置として使
 ## 注意
 
 - iPad の位置を書き換えるには、Developer Mode・LocalDevVPN・pairing file・DDI が必要です。
-- BLE 購読・位置注入・シミュレート位置の移動は Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
+- Bluetooth での位置の受け渡しと、iPad の位置の書き換えは Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
 - 本アプリは AGPL-3.0 です。詳しくは [License](License) を参照してください。

@@ -98,6 +98,7 @@ public final class SenderLocationService: NSObject, ObservableObject {
             log.info("位置情報の許可を要求します")
             manager.requestAlwaysAuthorization()
         } else if status.p2pIsAuthorized {
+            lastError = nil
             beginUpdates()
         } else {
             lastError = "位置情報の使用が許可されていません。設定 > プライバシーとセキュリティ > 位置情報サービスで許可してください。"
@@ -140,6 +141,7 @@ public final class SenderLocationService: NSObject, ObservableObject {
         guard status != authorizationStatus else { return }
         authorizationStatus = status
         if status.p2pIsAuthorized {
+            lastError = nil
             if wantsUpdates { beginUpdates() }
         } else if status == .denied || status == .restricted {
             lastError = "位置情報の使用が許可されていません。設定 > プライバシーとセキュリティ > 位置情報サービスで許可してください。"
@@ -180,6 +182,7 @@ extension SenderLocationService: CLLocationManagerDelegate {
         guard location.horizontalAccuracy >= 0 else { return }
         let fix = makeFix(from: location)
         latestFix = fix
+        lastError = nil
         onFix?(fix)
     }
 

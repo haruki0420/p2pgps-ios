@@ -59,7 +59,7 @@ sidestore://source?url=https%3A%2F%2Fraw.githubusercontent.com%2Fharuki0420%2Fp2
 ## 手動でソースを更新する
 
 ```bash
-python3 scripts/generate_source.py --tag v1.0.4
+python3 scripts/generate_source.py --tag v1.0.13
 ```
 
 `gh` CLI が認証済みである必要があります（CI では `GH_TOKEN` を渡しています）。

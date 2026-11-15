@@ -1,6 +1,6 @@
 # Product（このリポジトリ固有の実装メモ）
 
-> **正本はプロジェクト共通の PRODUCT.md（このリポジトリ外で管理）。**
+> **正本はプロジェクト共通の [Product](https://github.com/haruki0420/p2pgps/wiki/Product)。**
 > このファイルは `p2pgps-ios` の実装に固有の事実だけを追記する。プロダクトの
 > 利用者・目的・位置づけ・原則は共通版を参照し、ここには重複して書かない。
 > 共通版の `## Platform` は `adaptive`（iOS はこのリポジトリが担当）。

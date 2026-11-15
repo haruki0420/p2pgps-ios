@@ -102,7 +102,6 @@ final class SenderController: ObservableObject {
             .store(in: &cancellables)
 
         location.$lastError
-            .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] message in
                 self?.errorMessage = message
