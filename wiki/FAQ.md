@@ -67,3 +67,13 @@ v2 でアプリ層の HMAC / ペアリングコードを追加する余地を残
 ## 不具合を見つけたら？
 
 「診断」画面のログを共有し、再現手順・端末・iOS バージョンとともに GitHub の Issue で報告してください。座標はログ設定の桁数に丸められています。
+
+## 更新を自動化できますか？
+
+SideStore / AltStore の**ソース**に対応しています。リポジトリを public にするか公開用リポジトリにミラーしたうえで、SideStore の Sources に次を追加すると、新しいリリースが自動で一覧に表示されます。
+
+```
+https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
+```
+
+ソースの更新は CI（Release IPA の成功後）で自動化されています。アプリの更新インストール自体は SideStore 上でタップが必要です。詳細は [docs/source.md](https://github.com/haruki0420/p2pgps-ios/blob/main/docs/source.md) を参照してください。
