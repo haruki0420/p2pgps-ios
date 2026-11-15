@@ -224,52 +224,64 @@ struct ReceiverView: View {
 
     @ViewBuilder
     private var waitingContent: some View {
-        P2PEmptyState(
-            systemImage: "antenna.radiowaves.left.and.right",
-            title: central.isScanning ? "送信元を探しています" : "まだ受信していません",
-            message: "iPhone 側で「送信を開始」を押すと、ここに送信元が表示されます。"
-        )
+        if central.state.isConnected {
+            P2PEmptyState(
+                systemImage: "checkmark.circle",
+                title: "接続済み・位置データ待ち",
+                message: "送信側の START と位置通知を待っています。送信側アプリのログを確認してください。"
+            )
 
-        if !central.discoveredSenders.isEmpty {
-            VStack(spacing: 0) {
-                ForEach(central.discoveredSenders) { sender in
-                    Button {
-                        controller.connect(to: sender)
-                    } label: {
-                        HStack(spacing: 10) {
-                            SignalBars(quality: sender.signalQuality)
-                            Text(sender.name)
-                                .font(P2PFont.monoCaption)
-                                .foregroundStyle(P2PColor.ink)
-                                .lineLimit(1)
-                            Spacer(minLength: 8)
-                            Text("接続")
-                                .font(P2PFont.labelEmphasis)
-                                .foregroundStyle(P2PColor.pine)
+            if let error = controller.errorMessage {
+                P2PErrorRow(message: error)
+            }
+        } else {
+            P2PEmptyState(
+                systemImage: "antenna.radiowaves.left.and.right",
+                title: central.isScanning ? "送信元を探しています" : "まだ受信していません",
+                message: "iPhone 側で「送信を開始」を押すと、ここに送信元が表示されます。"
+            )
+
+            if !central.discoveredSenders.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(central.discoveredSenders) { sender in
+                        Button {
+                            controller.connect(to: sender)
+                        } label: {
+                            HStack(spacing: 10) {
+                                SignalBars(quality: sender.signalQuality)
+                                Text(sender.name)
+                                    .font(P2PFont.monoCaption)
+                                    .foregroundStyle(P2PColor.ink)
+                                    .lineLimit(1)
+                                Spacer(minLength: 8)
+                                Text("接続")
+                                    .font(P2PFont.labelEmphasis)
+                                    .foregroundStyle(P2PColor.pine)
+                            }
+                            .frame(minHeight: P2PSpacing.minimumTapTarget)
+                            .contentShape(Rectangle())
                         }
-                        .frame(minHeight: P2PSpacing.minimumTapTarget)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(sender.name) に接続")
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(sender.name) に接続")
 
-                    Rectangle()
-                        .fill(P2PColor.line)
-                        .frame(height: P2PSpacing.hairline)
+                        Rectangle()
+                            .fill(P2PColor.line)
+                            .frame(height: P2PSpacing.hairline)
+                    }
                 }
             }
-        }
 
-        PrimaryActionButton(
-            title: central.isScanning ? "スキャン中…" : "スキャン開始",
-            systemImage: "magnifyingglass",
-            isEnabled: !central.isScanning && !central.state.isConnected
-        ) {
-            controller.startScanning()
-        }
+            PrimaryActionButton(
+                title: central.isScanning ? "スキャン中…" : "スキャン開始",
+                systemImage: "magnifyingglass",
+                isEnabled: !central.isScanning && !central.state.isConnected
+            ) {
+                controller.startScanning()
+            }
 
-        if let error = controller.errorMessage {
-            P2PErrorRow(message: error)
+            if let error = controller.errorMessage {
+                P2PErrorRow(message: error)
+            }
         }
     }
 

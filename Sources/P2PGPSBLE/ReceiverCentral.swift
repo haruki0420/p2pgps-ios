@@ -461,6 +461,9 @@ extension ReceiverCentral: CBCentralManagerDelegate {
         lastError = nil
         userInitiatedDisconnect = false
         isReconnectPending = false
+        // A connected peripheral must not leave the receiver in "scanning" UI
+        // state; scanning also competes with the connection for radio time.
+        stopScanning()
         updateState(.connected(name: name))
         startRSSIPolling()
         log.info("送信元 \(name) に接続しました。サービスを探索します")
@@ -530,6 +533,7 @@ extension ReceiverCentral: CBPeripheralDelegate {
             return
         }
         for characteristic in service.characteristics ?? [] {
+            log.info("キャラクタリスティックを発見: \(characteristic.uuid) properties=\(characteristic.properties.rawValue)")
             if characteristic.uuid == BLEUUID.location {
                 locationCharacteristic = characteristic
                 peripheral.setNotifyValue(true, for: characteristic)
@@ -588,6 +592,8 @@ extension ReceiverCentral: CBPeripheralDelegate {
         if let error {
             log.warning("notify 購読に失敗 (\(characteristic.uuid)): \(error.localizedDescription)")
             reportError("通知の購読に失敗しました（\(characteristic.uuid)）: \(error.localizedDescription)")
+        } else {
+            log.info("通知購読: \(characteristic.uuid) isNotifying=\(characteristic.isNotifying)")
         }
     }
 
