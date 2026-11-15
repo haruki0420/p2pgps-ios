@@ -47,4 +47,4 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
 - 仕様: プロトコル仕様 v1（`p2pgps-protocol`、v1 凍結）
 - 全体アーキテクチャ: `wiki/Architecture.md`
 - 参照実装: https://github.com/truongkma/t-location（AGPL-3.0, 上流コミット固定）
-- 実機スクリーンショット・利用ログ: 無し（設計は推定）
+- 実機スクリーンショット・利用ログ: 無し
