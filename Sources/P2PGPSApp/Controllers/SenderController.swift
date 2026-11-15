@@ -110,7 +110,6 @@ final class SenderController: ObservableObject {
             .store(in: &cancellables)
 
         peripheral.$lastError
-            .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] message in
                 self?.errorMessage = message
@@ -404,7 +403,7 @@ final class SenderController: ObservableObject {
             return "送信中（\(P2PFormat.interval(intervalMilliseconds)) 間隔）"
         }
         if isAdvertising {
-            return "停止中（アドバタイズ中）"
+            return "待機中（iPad からの接続待ち）"
         }
         return "停止中"
     }

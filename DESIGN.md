@@ -45,6 +45,6 @@
 ## 検証状況
 
 - コンパイル: **CI（macOS ランナー）で検証済み**（`swift test` / iOS クロスビルド /
-  XcodeGen + xcodebuild リンクのみ。実機の BLE・注入・UI は未検証）。
-- レンダリング: **未検証**（Simulator / 実機なし）。Dynamic Type・Dark Mode の
-  全画面の実画面確認は未実施で、既知の制約として README に明記する。
+  XcodeGen + xcodebuild リンク）。
+- BLE 購読・位置注入は Android 実機 + iPad で確認済みです。
+- 全画面 UI・Dynamic Type・Dark Mode は **未確認**です。

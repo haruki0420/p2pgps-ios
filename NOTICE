@@ -117,7 +117,7 @@ Protocol
 
 The BLE protocol implemented here is specified in the sibling repository
 `p2pgps-protocol` (`spec/protocol-v1.md`), mirrored at
-`p2pgps/docs/protocol-spec.md` at the time of writing. The specification and
+`p2pgps-protocol/spec/protocol-v1.md` at the time of writing. The specification and
 the Python reference implementation are MIT licensed; this app is a separate
 AGPL-3.0 work.
 

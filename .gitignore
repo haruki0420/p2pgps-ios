@@ -14,7 +14,7 @@ xcuserdata/
 
 # --- Vendored binary ---------------------------------------------------------
 # 54.4 MB, arm64 iOS only. Fetch with scripts/fetch-vendor.sh and verify the
-# SHA-256; never commit it (see NOTICE / docs/architecture.md).
+# SHA-256; never commit it (see NOTICE / wiki/Architecture.md).
 Vendor/idevice/libidevice_ffi.a
 Vendor/idevice/*.a.tmp
 

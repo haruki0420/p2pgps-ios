@@ -16,7 +16,7 @@
 - **CI で protocol リポジトリを checkout する仕組みは未導入**です。ベクタを
   更新するときは上流からコピーし直し、`swift test` を通してください。
 - 上流の README のとおり、Python / Swift（このミラー）/ Kotlin（Android）の
-  3 実装が同じ JSON を読んでいます。Android も `ProtocolVectorTest` から
+  各実装が同じ内容のミラーを読んでいます（自動同期はありません）。Android も `ProtocolVectorTest` から
   JSON を読み込むため、実装間の乖離は各実装のテストで検出できます。
   手動ミラーのため、上流更新時の再同期は運用で担保します。
 

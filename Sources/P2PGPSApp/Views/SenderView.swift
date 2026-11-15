@@ -35,7 +35,7 @@ struct SenderView: View {
                 senderName: controller.localName,
                 lastReceivedAt: controller.lastSentAt,
                 signalQuality: signalQuality,
-                accuracyText: "購読 \(controller.subscriberCount) 台",
+                accuracyText: "受信中の iPad \(controller.subscriberCount) 台",
                 statusText: controller.bleState.localizedDescription,
                 lastEventLabel: "最終送信"
             )
@@ -59,7 +59,7 @@ struct SenderView: View {
                         }
 
                         PrimaryActionButton(
-                            title: isSending ? "送信を停止" : "送信を開始",
+                            title: actionTitle,
                             systemImage: isSending ? "stop.circle" : "antenna.radiowaves.left.and.right"
                         ) {
                             controller.toggleSending()
@@ -130,7 +130,7 @@ struct SenderView: View {
                 MetricItem(label: "標高", value: P2PFormat.altitude(fix.altitudeMeters))
                 MetricItem(label: "速度", value: P2PFormat.speed(fix.speedMetersPerSecond))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("fix 品質")
+                    Text("測位の精度")
                         .font(P2PFont.caption)
                         .foregroundStyle(P2PColor.inkSecondary)
                     FixQualityBars(level: controller.fixQualityLevel)
@@ -238,6 +238,12 @@ struct SenderView: View {
 
     private var isSending: Bool {
         controller.isStreaming || controller.isAdvertising
+    }
+
+    private var actionTitle: String {
+        if controller.isStreaming { return "送信を停止" }
+        if controller.isAdvertising { return "接続待ちをやめる" }
+        return "送信を開始"
     }
 
     private var needsLocationPermission: Bool {
