@@ -158,7 +158,7 @@ struct SettingsView: View {
                         pairingPresent = false
                         infoMessage = "pairing file を削除しました。"
                     } catch {
-                        errorMessage = "pairing file を削除できませんでした。\n(\(error.localizedDescription))"
+                        errorMessage = "pairing file を削除できませんでした。"
                     }
                 } label: {
                     Label("pairing file を削除", systemImage: "trash")
@@ -218,7 +218,7 @@ struct SettingsView: View {
                     URL(string: "https://apps.apple.com/us/app/localdevvpn/id6755608044")!,
                 ])
             } label: {
-                Label("LocalDevVPN を開く", systemImage: "network")
+                Label("VPN アプリを開く", systemImage: "network")
             }
 
             Toggle("TLocation に任せる（上級者向け）", isOn: $settings.useTLocationURLSchemeFallback)
@@ -341,10 +341,10 @@ struct SettingsView: View {
                 infoMessage = "pairing file を読み込みました。iPad 内部への接続をやり直します。"
                 TunnelManager.shared.start()
             } catch {
-                errorMessage = "pairing file を読み込めませんでした。ファイルを選び直してください。\n(\(error.localizedDescription))"
+                errorMessage = "pairing file を読み込めませんでした。ファイルを選び直してください。"
             }
         case .failure(let error):
-            errorMessage = "pairing file を選択できませんでした。\n(\(error.localizedDescription))"
+            errorMessage = "pairing file を選択できませんでした。"
         }
     }
 
@@ -375,7 +375,7 @@ struct SettingsView: View {
                 isDownloadingDDI = false
                 ddiProgress = nil
                 ddiMessage = nil
-                errorMessage = "DDI をダウンロードできませんでした。ネットワーク接続を確認して再試行してください。\n(\(error.localizedDescription))"
+                errorMessage = "DDI をダウンロードできませんでした。ネットワーク接続を確認して再試行してください。"
             }
         }
     }

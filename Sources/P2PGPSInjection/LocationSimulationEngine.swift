@@ -177,7 +177,7 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
     let inetResult = deviceIP.withCString { inet_pton(AF_INET, $0, &address.sin_addr) }
     guard inetResult == 1 else {
         LogStore.shared.error(
-            "simulate_location 失敗 (code \(LocationSimulationStatus.invalidIP)): “\(deviceIP)” は有効な IPv4 アドレスではありません。設定のターゲット IP を確認してください。"
+            "simulate_location 失敗 (code \(LocationSimulationStatus.invalidIP)): “\(deviceIP)” は有効な IPv4 アドレスではありません。設定の接続先を確認してください。"
         )
         return LocationSimulationStatus.invalidIP
     }
@@ -260,7 +260,7 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
     )
     if let locationSimulationError {
         LogStore.shared.error(
-            "simulate_location 失敗 (code \(LocationSimulationStatus.locationSimulation)): 位置シミュレーションセッションを開始できません — \(IdeviceBridge.detail(from: locationSimulationError))。Developer Disk Image がマウントされていない可能性があります。"
+            "simulate_location 失敗 (code \(LocationSimulationStatus.locationSimulation)): 位置の書き換えを開始できません — \(IdeviceBridge.detail(from: locationSimulationError))。DDI が使える状態になっていない可能性があります。"
         )
         idevice_error_free(locationSimulationError)
         LocationSimulationState.cleanup()
@@ -550,7 +550,7 @@ public final class LocationSimulationEngine: ObservableObject {
     static func message(for code: Int32) -> String {
         switch code {
         case LocationSimulationStatus.invalidIP:
-            return "ターゲット IP が不正です。設定で \(DeviceConnectionContext.defaultTargetIPAddress) に戻して再試行してください。"
+            return "接続先が不正です。設定で \(DeviceConnectionContext.defaultTargetIPAddress) に戻して再試行してください。"
         case LocationSimulationStatus.pairingRead:
             return "pairing file を読み取れません。設定から pairing file を読み込み直してください。"
         case LocationSimulationStatus.providerCreate:
@@ -558,7 +558,7 @@ public final class LocationSimulationEngine: ObservableObject {
         case LocationSimulationStatus.remoteServer:
             return "デバイスのリモートサービスに接続できませんでした。Developer Mode と DDI の状態を確認して再試行してください。"
         case LocationSimulationStatus.locationSimulation:
-            return "位置シミュレーションを開始できませんでした。設定で DDI をマウントしてから再試行してください。"
+            return "位置の書き換えを開始できませんでした。設定で DDI を使える状態にしてから再試行してください。"
         case LocationSimulationStatus.locationSet:
             return "デバイスが座標を受け付けませんでした。少し待ってから再試行してください。"
         case LocationSimulationStatus.locationClear:

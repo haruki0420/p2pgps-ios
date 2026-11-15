@@ -12,10 +12,13 @@ iPhone の現在地を Bluetooth で iPad に送り、iPad の位置として使
 ## はじめかた
 
 1. [Setup iPad](Setup-iPad) — iPad の準備（Developer Mode / LocalDevVPN / pairing file / DDI）
-2. [Build](Build) — アプリのビルド
-3. [Source](Source) — SideStore / AltStore での配布
-4. [困ったとき](Troubleshooting)
-5. [よくある質問](FAQ)
+2. [困ったとき](Troubleshooting)
+3. [よくある質問](FAQ)
+
+## 開発者向け
+
+- [Build](Build) — アプリのビルド
+- [Source](Source) — SideStore / AltStore での配布
 
 ## できること
 

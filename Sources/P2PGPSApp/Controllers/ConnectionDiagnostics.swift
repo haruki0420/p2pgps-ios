@@ -300,7 +300,7 @@ final class ConnectionDiagnostics: ObservableObject {
                     ConnectionDiagnosticResult(
                         title: "\(host):\(portValue)",
                         status: .failure,
-                        detail: "3 秒以内に接続できませんでした。LocalDevVPN が接続済みか、ターゲット IP が正しいか確認してください。"
+                        detail: "3 秒以内に接続できませんでした。LocalDevVPN が接続済みか、接続先が正しいか確認してください。"
                     )
                 )
             }

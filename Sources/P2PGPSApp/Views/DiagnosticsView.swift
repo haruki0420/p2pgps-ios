@@ -29,6 +29,11 @@ struct DiagnosticsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    Text("ここには開発者向けの技術情報が含まれます。ふだんは「確認を実行」だけ使ってください。")
+                        .font(P2PFont.caption)
+                        .foregroundStyle(P2PColor.inkSecondary)
+                }
                 if let central {
                     Section("受信の状態") {
                         ReceiverDiagnosticsRows(central: central)
@@ -47,7 +52,7 @@ struct DiagnosticsView: View {
                 Section("iPad 内部への接続") {
                     TunnelDiagnosticsRows()
                 }
-                Section("つながらないときの確認") {
+                Section("確認（技術情報）") {
                     ConnectionDiagnosticsRows()
                 }
                 Section("動作記録") {
