@@ -134,7 +134,7 @@ open P2PGPS.xcodeproj
 
 ## デザイン
 
-UI の視覚世界・トークン・anti-slop ルールの正本はリポジトリルートの [`DESIGN.md`](DESIGN.md)（プロダクト事実は [`PRODUCT.md`](PRODUCT.md)）です。iOS 実装への落とし込みは [`docs/design.md`](docs/design.md) に記録しています。
+UI の視覚世界・トークン・anti-slop ルールの正本はプロジェクト共通の DESIGN.md（このリポジトリ外で管理、プロダクト事実は PRODUCT.md）です。iOS 実装への落とし込みは [`docs/design.md`](docs/design.md) に記録しています。
 
 - 視覚世界は「測量標（benchmark）」。地図と座標が主役の計測器で、カードの山・グラデーション・影・絵文字アイコンは使いません。
 - 色は paper / surface / ink / line / pine / live / amber / danger のセマンティックトークン（Light/Dark 両対応、`Color` extension で実装）。

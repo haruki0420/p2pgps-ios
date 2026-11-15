@@ -1,6 +1,6 @@
 # Product（このリポジトリ固有の実装メモ）
 
-> **正本はプロジェクト共通の [`PRODUCT.md`](PRODUCT.md)。**
+> **正本はプロジェクト共通の PRODUCT.md（このリポジトリ外で管理）。**
 > このファイルは `p2pgps-ios` の実装に固有の事実だけを追記する。プロダクトの
 > 利用者・目的・位置づけ・原則は共通版を参照し、ここには重複して書かない。
 > 共通版の `## Platform` は `adaptive`（iOS はこのリポジトリが担当）。
@@ -44,6 +44,7 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
 
 ## Evidence on Hand
 
-- 仕様: `p2pgps-protocol/spec/protocol-v1.md`（v1 凍結）, `docs/architecture.md` §2
-- 参照実装: `https://github.com/truongkma/t-location`（AGPL-3.0, 上流コミット固定）
+- 仕様: プロトコル仕様 v1（`p2pgps-protocol`、v1 凍結）
+- 全体アーキテクチャ: `docs/architecture.md`
+- 参照実装: https://github.com/truongkma/t-location（AGPL-3.0, 上流コミット固定）
 - 実機スクリーンショット・利用ログ: 無し（設計は推定）

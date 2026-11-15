@@ -6,8 +6,8 @@
 //  Copyright (C) 2026 haruki0420 and contributors
 //  SPDX-License-Identifier: AGPL-3.0-or-later
 //
-//  The authoritative design document is the repository-root `DESIGN.md`
-//  (DESIGN.md). This file is the iOS implementation of its color, type and
+//  The authoritative design document is the project's common `DESIGN.md`
+//  (managed outside this repository). This file is the iOS implementation of its color, type and
 //  spacing tokens. Rules that matter:
 //
 //    * No gradients, no shadows, no glass. Hierarchy comes from `line` hairlines
