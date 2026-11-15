@@ -2,11 +2,14 @@
 #
 # Fetch the vendored `libidevice_ffi.a` static library and verify its SHA-256.
 #
-# The library is ~92.6 MB and arm64/iOS-only, so it is not checked into git.
-# It is taken verbatim from TLocation at the pinned upstream commit (the same
-# commit this repository ports its location-injection engine from):
+# The library is ~54.4 MB and arm64/iOS-only, so it is not checked into git.
+# It is taken verbatim from StikDebug at the pinned upstream commit. The
+# StikDebug build is used instead of TLocation's older copy because it contains
+# the idevice revision with the iOS 26 Remote Pairing changes (Bonjour port
+# discovery / `_remotepairing._tcp`); the engine code itself is still ported
+# from TLocation.
 #
-#   https://github.com/truongkma/t-location/commit/5e57f815e5958f133dfbaae8252473054adeccf0
+#   https://github.com/StikDebug/StikDebug/commit/7a80dfce28eeb501faca6498d1746949ac921e74
 #
 # Usage:
 #   bash scripts/fetch-vendor.sh          # download if missing/invalid
@@ -16,8 +19,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="${ROOT_DIR}/Vendor/idevice/libidevice_ffi.a"
-URL="https://raw.githubusercontent.com/truongkma/t-location/5e57f815e5958f133dfbaae8252473054adeccf0/TLocation/idevice/libidevice_ffi.a"
-SHA256="6524066d54ef23e00d46445c04dfc694e180196d54119d718f68434fa225be35"
+URL="https://raw.githubusercontent.com/StikDebug/StikDebug/7a80dfce28eeb501faca6498d1746949ac921e74/StikDebug/idevice/libidevice_ffi.a"
+SHA256="4db23fe1d342927b9480bb9a8577f219994365621dc28aa0018e23ea1990ecc8"
 
 FORCE=0
 if [[ "${1:-}" == "--force" ]]; then
@@ -48,7 +51,7 @@ mkdir -p "$(dirname "${DEST}")"
 TMP="${DEST}.tmp"
 rm -f "${TMP}"
 
-echo "Downloading libidevice_ffi.a (about 92.6 MB)…"
+echo "Downloading libidevice_ffi.a (about 54.4 MB)…"
 if command -v curl >/dev/null 2>&1; then
   curl -fL --retry 3 --retry-delay 2 -o "${TMP}" "${URL}"
 elif command -v wget >/dev/null 2>&1; then

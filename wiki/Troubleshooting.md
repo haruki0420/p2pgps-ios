@@ -22,7 +22,7 @@
 
 - pairing file が RPPairing 形式か（lockdown のみのファイルでは接続できません）
 - Wi-Fi に接続しているか
-- `10.7.0.1:49152` に TCP 接続できるか
+- Remote Pairing ポート（Bonjour で自動検出。失敗時は 49152）に TCP 接続できるか
 
 結果と「トンネル / DDI」セクションの **FFI エラー**（code とメッセージ）が原因特定の手がかりになります。
 
@@ -31,6 +31,7 @@
 | pairing file が「lockdown のみ」 | iloader でエクスポートし直す（RPPairing を含むファイル） |
 | Wi-Fi が「接続されていない」 | Wi-Fi に接続する（RSD は Wi-Fi 接続中のみ開放） |
 | TCP が「接続待ち / 失敗」 | LocalDevVPN が接続済みか、他の VPN が有効でないか確認。Developer Mode が ON か確認。ローカルネットワークの許可を確認 |
+| 「Remote Pairing ポート」が Fallback になる | 設定 > プライバシーとセキュリティ > ローカルネットワーク で P2P GPS を ON にして、アプリを再起動 |
 | ポートが使用中 | 他の VPN / デバッグアプリを閉じ、LocalDevVPN を再接続。改善しなければ iPad を再起動 |
 | 接続タイムアウト | Wi-Fi と LocalDevVPN が接続されているか確認。iPad をスリープ解除 |
 | 経路がない | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON |

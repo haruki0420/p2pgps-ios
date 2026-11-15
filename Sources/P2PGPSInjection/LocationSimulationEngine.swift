@@ -165,9 +165,14 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
         }
     }
 
+    // The Remote Pairing service is advertised over Bonjour on recent iOS
+    // versions; 49152 is only a fallback (StikDebug's RemotePairingPortResolver).
+    let remotePairingPort = RemotePairingPortResolver.resolve(targetIPAddress: deviceIP)
+
     var address = sockaddr_in()
+    address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
     address.sin_family = sa_family_t(AF_INET)
-    address.sin_port = in_port_t(49152).bigEndian
+    address.sin_port = in_port_t(remotePairingPort).bigEndian
 
     let inetResult = deviceIP.withCString { inet_pton(AF_INET, $0, &address.sin_addr) }
     guard inetResult == 1 else {
@@ -213,7 +218,7 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
 
     if let providerError {
         LogStore.shared.error(
-            "simulate_location 失敗 (code \(LocationSimulationStatus.providerCreate)): \(deviceIP):49152 へのトンネルを開けません — \(IdeviceBridge.detail(from: providerError))。LocalDevVPN が接続されているか確認してください。"
+            "simulate_location 失敗 (code \(LocationSimulationStatus.providerCreate)): \(deviceIP):\(remotePairingPort) へのトンネルを開けません — \(IdeviceBridge.detail(from: providerError))。LocalDevVPN が接続されているか確認してください。"
         )
         idevice_error_free(providerError)
         LocationSimulationState.cleanup()
@@ -227,7 +232,7 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
     )
     if let remoteServerError {
         LogStore.shared.error(
-            "simulate_location 失敗 (code \(LocationSimulationStatus.remoteServer)): \(deviceIP):49152 のリモートサービスに接続できません — \(IdeviceBridge.detail(from: remoteServerError))"
+            "simulate_location 失敗 (code \(LocationSimulationStatus.remoteServer)): \(deviceIP):\(remotePairingPort) のリモートサービスに接続できません — \(IdeviceBridge.detail(from: remoteServerError))"
         )
         idevice_error_free(remoteServerError)
         LocationSimulationState.cleanup()

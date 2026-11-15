@@ -204,10 +204,16 @@ private struct TunnelDiagnosticsRows: View {
     var body: some View {
         Group {
             DiagnosticRow(label: "トンネル", value: tunnel.isConnected ? "接続済み" : (tunnel.isStarting ? "接続中" : "未接続"))
-            DiagnosticRow(label: "ターゲット", value: "\(DeviceConnectionContext.targetIPAddress):49152")
+            DiagnosticRow(label: "ターゲット", value: RemotePairingPortResolver.lastAttemptDescription)
             DiagnosticRow(label: "DDI マウント", value: mounting.isDeveloperDiskImageMounted ? "済み" : "未")
             if let technical = tunnel.lastTechnicalError {
                 DiagnosticRow(label: "FFI エラー", value: technical)
+                if technical.contains("ConnectionReset") || technical.contains("code: 54") {
+                    Text("RSD が接続をリセットしました。pairing file を iloader で再生成（Delete Stored Pairing → Place → エクスポート）してから再インポートするか、LocalDevVPN を再接続して再試行してください。")
+                        .font(P2PFont.caption)
+                        .foregroundStyle(P2PColor.amber)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             if let error = tunnel.lastError {
                 Text(error)

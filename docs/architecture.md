@@ -16,10 +16,10 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 | `P2PGPSCore` | プラットフォーム非依存のモデル | `GPSFix`, `FixFilter`, `AppSettings`, `SettingsStore`, `LogStore`, `AppRole` |
 | `P2PGPSBLE` | CoreBluetooth | `ReceiverCentral`, `SenderPeripheral`, `SignalQuality` |
 | `P2PGPSLocation` | CoreLocation | `SenderLocationService`, `BackgroundKeepAlive`, `DeviceBattery` |
-| `P2PGPSInjection` | TLocation 移植の位置注入 | `LocationSimulationEngine`, `TunnelManager`, `MountingProgress`, `DeveloperDiskImageService`, `PairingFileStore`, `URLSchemeLocationFallback` |
+| `P2PGPSInjection` | TLocation 移植の位置注入 | `LocationSimulationEngine`, `TunnelManager`, `MountingProgress`, `DeveloperDiskImageService`, `PairingFileStore`, `RemotePairingPortResolver`, `URLSchemeLocationFallback` |
 | `P2PGPSApp` | SwiftUI アプリ | `P2PGPSiOSApp`（@main）, `RootView`, `HomeView`, `ReceiverView`, `SenderView`, `SettingsView`, `DiagnosticsView` |
 
-`idevice` は `Vendor/idevice` の C ターゲット（公開ヘッダは `Vendor/idevice/include/` の `idevice.h` + `module.modulemap`）です。静的ライブラリ `libidevice_ffi.a` はリポジトリに含めず、`scripts/fetch-vendor.sh` が TLocation の固定コミットから取得して SHA-256 を検証します。
+`idevice` は `Vendor/idevice` の C ターゲット（公開ヘッダは `Vendor/idevice/include/` の `idevice.h` + `module.modulemap`）です。静的ライブラリ `libidevice_ffi.a` はリポジトリに含めず、`scripts/fetch-vendor.sh` が StikDebug の固定コミット（iOS 26 の Remote Pairing 対応を含む idevice ビルド）から取得して SHA-256 を検証します。
 
 ## 2. データフロー（Receiver）
 

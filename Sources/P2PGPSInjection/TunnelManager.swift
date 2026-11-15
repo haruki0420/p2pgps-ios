@@ -101,7 +101,7 @@ public final class TunnelManager: ObservableObject {
             isConnected = true
             lastError = nil
             lastTechnicalError = nil
-            log.info("トンネル接続に成功しました (\(DeviceConnectionContext.targetIPAddress):49152)")
+            log.info("トンネル接続に成功しました (\(RemotePairingPortResolver.lastAttemptDescription))")
             mountDeveloperDiskImageIfNeeded()
         case .failure(let error):
             isConnected = false
@@ -153,7 +153,7 @@ public final class TunnelManager: ObservableObject {
         if raw.contains("network is unreachable") || raw.contains("no route") {
             return "VPN の経路がありません。LocalDevVPN を接続し直してから再試行してください。"
         }
-        return "\(target):49152 に接続できませんでした。Wi-Fi と LocalDevVPN を確認し、pairing file を選び直して再試行してください。"
+        return "\(target) の Remote Pairing サービスに接続できませんでした。Wi-Fi と LocalDevVPN を確認し、pairing file を選び直して再試行してください。"
     }
 }
 

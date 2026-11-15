@@ -21,11 +21,12 @@ import Darwin
 import Foundation
 import idevice
 
-/// Owns the app's long-lived RSD tunnel to `<targetIP>:49152`.
+/// Owns the app's long-lived RSD tunnel to `<targetIP>:<discovered RSD port>`.
 ///
-/// This tunnel is used for DDI mounting and mount checks. Location simulation
-/// builds its own tunnel inside `simulate_location` (see
-/// `LocationSimulationEngine.swift`) because the endpoint is single-occupancy.
+/// This tunnel is used for DDI mounting and mount checks. The port is
+/// discovered over Bonjour (`_remotepairing._tcp`) because recent iOS versions
+/// do not guarantee the historical fixed port 49152 (see
+/// `RemotePairingPortResolver`).
 final class JITEnableContext {
     static let shared = JITEnableContext()
 
@@ -142,11 +143,14 @@ final class JITEnableContext {
         let pairingFile = try getPairingFile()
         defer { rp_pairing_file_free(pairingFile) }
 
-        var addr = sockaddr_in()
-        addr.sin_family = sa_family_t(AF_INET)
-        addr.sin_port = in_port_t(49152).bigEndian
-
         let deviceIP = DeviceConnectionContext.targetIPAddress
+        let remotePairingPort = RemotePairingPortResolver.resolve(targetIPAddress: deviceIP)
+
+        var addr = sockaddr_in()
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = in_port_t(remotePairingPort).bigEndian
+
         let parseResult = deviceIP.withCString { inet_pton(AF_INET, $0, &addr.sin_addr) }
         guard parseResult == 1 else {
             throw makeError("Failed to parse target IP address.", code: -18)

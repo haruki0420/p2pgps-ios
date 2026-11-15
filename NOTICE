@@ -24,10 +24,14 @@ This program incorporates code derived from the following projects
 StikDebug
   https://github.com/StikDebug/StikDebug
   License: AGPL-3.0
+  Upstream commit: 7a80dfce28eeb501faca6498d1746949ac921e74
   Copyright (C) Stephen Bove (Stik) and the StikDebug contributors.
   The on-device location-simulation approach (pairing file, loopback RSD
   tunnel, Developer Disk Image mounting, the idevice FFI call sequence and the
-  background keep-alive) originates from StikDebug.
+  background keep-alive) originates from StikDebug. The Remote Pairing port
+  discovery (`RemotePairingPortResolver`, Bonjour `_remotepairing._tcp`) is
+  ported from StikDebug's `StikDebug/Device/JITEnableContext.swift` at the
+  commit above.
 
 TLocation
   https://github.com/truongkma/t-location
@@ -54,14 +58,15 @@ idevice
   Full MIT text: Vendor/idevice/LICENSE.
   - Vendor/idevice/include/idevice.h and
     Vendor/idevice/include/module.modulemap are copied
-    verbatim from TLocation's `TLocation/idevice/` directory (which vendors
-    them from idevice).
+    verbatim from StikDebug's `StikDebug/idevice/` directory (which vendors
+    them from idevice; the newer revision is required for the iOS 26 Remote
+    Pairing changes).
   - Vendor/idevice/idevice_anchor.c is an original translation unit added so
     SwiftPM accepts the header-only C target; it is MIT-licensed as declared in
     its SPDX header.
   - Vendor/idevice/libidevice_ffi.a is NOT committed; scripts/fetch-vendor.sh
-    downloads it from the pinned TLocation commit and verifies
-    SHA-256 6524066D54EF23E00D46445C04DFC694E180196D54119D718F68434FA225BE35.
+    downloads it from the pinned StikDebug commit and verifies
+    SHA-256 4DB23FE1D342927B9480BB9A8577F219994365621DC28AA0018E23EA1990ECC8.
 
 libplist (LGPL-2.1) — embedded declarations in idevice.h
   https://github.com/libimobiledevice/libplist

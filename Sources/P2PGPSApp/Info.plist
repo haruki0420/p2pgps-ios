@@ -63,7 +63,11 @@
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>近くの iPad に位置情報を送信するために Bluetooth を使用します。</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>LocalDevVPN 経由でこのデバイス自身の位置情報サービスに接続するためにローカルネットワークを使用します。</string>
+	<string>Remote Pairing サービスを Bonjour で検出し、LocalDevVPN 経由でこのデバイス自身の位置情報サービスに接続するためにローカルネットワークを使用します。</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_remotepairing._tcp</string>
+	</array>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>現在地を取得して iPad に送信し、画面を消している間も位置情報の反映を維持するために位置情報を使用します。</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

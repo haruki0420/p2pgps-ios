@@ -46,7 +46,7 @@ p2pgps-ios/
 ├── project.yml                  # XcodeGen（CI の Xcode リンク検証用）
 ├── PRODUCT.md / DESIGN.md       # 正本はリポジトリルートの共通版。ここは iOS 実装メモ
 ├── Resources/                   # アプリアイコン（PNG）
-├── Vendor/idevice/              # include/ に idevice.h + module.modulemap（MIT）。LICENSE 同梱。.a は fetch スクリプトで取得
+├── Vendor/idevice/              # include/ に idevice.h + module.modulemap（MIT）。LICENSE 同梱。.a は fetch スクリプトで取得（StikDebug のビルド）
 ├── scripts/
 │   ├── fetch-vendor.sh          # libidevice_ffi.a の取得 + SHA-256 検証（macOS/Linux/WSL）
 │   └── fetch-vendor.ps1         # 同（Windows PowerShell）
@@ -67,7 +67,7 @@ p2pgps-ios/
 
 ### 1. ベンダーライブラリの取得（必須）
 
-`libidevice_ffi.a`（約 92.6 MB、arm64 iOS 専用）はリポジトリに含めていません。TLocation の固定コミットから取得し、SHA-256 を検証します。
+`libidevice_ffi.a`（約 54.4 MB、arm64 iOS 専用）はリポジトリに含めていません。StikDebug の固定コミット（iOS 26 の Remote Pairing 対応を含む idevice ビルド）から取得し、SHA-256 を検証します。
 
 ```bash
 # macOS / Linux / WSL
@@ -185,7 +185,7 @@ GitHub Releases に以下を添付しています（`.github/workflows/release-i
 ## 既知の制約
 
 - **実機・シミュレータでの動作検証は未実施**です。この開発環境には Xcode / Swift / iOS 実機がなく、CI はコンパイルとリンクのみを保証します。BLE・位置注入・UI の実動作は実機で確認してください。
-- 位置注入は Apple の Developer Disk Image・LocalDevVPN・pairing file を必要とし、TLocation と同一の idevice FFI に固定しています。iOS の更新で壊れる可能性があります。
+- 位置注入は Apple の Developer Disk Image・LocalDevVPN・pairing file を必要とし、StikDebug の idevice FFI（iOS 26 の Remote Pairing 対応版）に固定しています。iOS の更新で壊れる可能性があります。
 - v1 は **同時 1 台接続**、ボンディング / 認証なし（Just Works 相当）。近距離の第三者が偽の位置を送れるため、自動接続は許可した送信元のみ、注入は既定 OFF、注入中は常時バナー表示としています。
 - 実機での UI 確認（Dynamic Type / Dark Mode / Reduce Motion）は未実施です。
 - iOS のバックグラウンドではアドバタイズのローカルネームが落ちることがあり、その間は受信側の名前フィルタで送信元が見えにくくなります（接続済みなら影響なし）。
@@ -200,4 +200,5 @@ GitHub Releases に以下を添付しています（`.github/workflows/release-i
 
 - 本リポジトリ: **AGPL-3.0**（[LICENSE](LICENSE)）
 - 上流: StikDebug / TLocation（AGPL-3.0）、idevice（MIT、全文は [Vendor/idevice/LICENSE](Vendor/idevice/LICENSE)）、libplist（LGPL-2.1、`idevice.h` 内の宣言のみ。全文は [Vendor/idevice/LICENSE.libplist](Vendor/idevice/LICENSE.libplist)）、xtool（MIT）。詳細は [NOTICE](NOTICE)。
+- Remote Pairing のポート検出（Bonjour `_remotepairing._tcp`）は StikDebug の `RemotePairingPortResolver` を移植したものです（`Sources/P2PGPSInjection/RemotePairingPortResolver.swift`）。
 - プロトコル仕様と Python リファレンス実装（`p2pgps-protocol`）は MIT です。

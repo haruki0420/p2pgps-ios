@@ -12,7 +12,8 @@
 //  AGPL-3.0. Copyright (C) Stephen and the StikDebug / TLocation contributors.
 //
 //  LocalDevVPN exposes the device itself as 10.7.0.1, which is the only way an
-//  app can reach its own RSD service (port 49152).
+//  app can reach its own Remote Pairing service. The service port is discovered
+//  over Bonjour (`_remotepairing._tcp`); 49152 is only the fallback.
 //
 
 import Foundation

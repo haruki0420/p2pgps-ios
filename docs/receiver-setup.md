@@ -71,6 +71,7 @@ iloader は SideStore 用の **RPPairing / lockdown pairing file** を自動で�
 1. P2P GPS を起動し「設定」を開きます。
 2. **「pairing file を読み込む」** → Files から手順 2 で保存したファイルを選択します（`.mobiledevicepairing` / `.mobiledevicepair` / `.plist` に対応）。
 3. 「読み込み済み」と表示されれば OK です。トンネルの再試行が自動で走ります。
+4. 初回のトンネル接続時に **「ローカルネットワーク」の許可** を求められます。これは Remote Pairing サービスを Bonjour（`_remotepairing._tcp`）で検出するために必要です。**許可**してください（拒否した場合は 設定 > プライバシーとセキュリティ > ローカルネットワーク で P2P GPS を ON にしてください）。
 
 > iloader が今後「配置」に対応すると、Documents に置かれた pairing file は **アプリ起動時・フォアグラウンド復帰時・設定を開いたときに自動で読み込まれます**。手動で再読み込みしたい場合は、設定の「Documents から再読み込み」を押してください。
 
@@ -79,6 +80,7 @@ iloader は SideStore 用の **RPPairing / lockdown pairing file** を自動で�
 1. **LocalDevVPN** を開いて **Connect** します（ステータスバーに VPN アイコンが表示されます）。
 2. LocalDevVPN は iPad 自身を `10.7.0.1` として公開します。本アプリの Settings の**ターゲット IP が `10.7.0.1`**（既定値）であることを確認してください。
 3. **Wi-Fi に接続している必要があります**（RSD / lockdownd は Wi-Fi 関連時のみ開放されます）。
+4. Remote Pairing のポートは固定値ではなく、Bonjour で自動検出します（検出できない場合は 49152 にフォールバック）。診断画面の「Remote Pairing ポート」で検出結果を確認できます。
 
 > LocalDevVPN が使えない場合（他の VPN と競合する、Tailscale を常時使いたい等）は、Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [ネットワーク構成（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/blob/main/docs/networking.md) を参照してください。
 
@@ -103,7 +105,8 @@ DDI の取得元: [doronz88/DeveloperDiskImage](https://github.com/doronz88/Deve
 | 症状 | 確認すること |
 | :--- | :--- |
 | 送信元が見つからない | iPhone 側で「送信を開始」しているか。Bluetooth が ON か。近距離か。 |
-| トンネル接続に失敗する | **診断画面 →「接続診断を実行」** で pairing file の形式・Wi-Fi・`10.7.0.1:49152` への TCP 到達性を確認。あわせて LocalDevVPN が接続中か、他の VPN が有効でないか、Developer Mode が ON か、ターゲット IP が `10.7.0.1` かを確認。 |
+| トンネル接続に失敗する | **診断画面 →「接続診断を実行」** で pairing file の形式・Wi-Fi・Remote Pairing ポートへの TCP 到達性を確認。あわせて LocalDevVPN が接続中か、他の VPN が有効でないか、Developer Mode が ON か、ターゲット IP が `10.7.0.1` かを確認。 |
+| 診断で「ローカルネットワーク」の許可が必要と出る / ポート検出が Fallback になる | 設定 > プライバシーとセキュリティ > ローカルネットワーク で P2P GPS を ON にしてから、アプリを再起動して再試行。 |
 | 診断で pairing file が「lockdown のみ」と出る | iloader でエクスポートし直し（RPPairing を含むファイル）、本アプリで再インポート。 |
 | 診断で TCP が「接続待ち / 失敗」と出る | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON。他の VPN を切断。ローカルネットワークの許可を確認。 |
 | pairing file が無効と言われる | iloader で pairing file を再配置・再エクスポートしてインポートし直す。期限切れの可能性。 |

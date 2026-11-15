@@ -42,7 +42,6 @@ final class ConnectionDiagnostics: ObservableObject {
     @Published private(set) var summary: String?
 
     private let targetHost = DeviceConnectionContext.targetIPAddress
-    private let targetPort: UInt16 = 49152
 
     func run() {
         guard !isRunning else { return }
@@ -54,12 +53,32 @@ final class ConnectionDiagnostics: ObservableObject {
             guard let self else { return }
 
             var collected: [ConnectionDiagnosticResult] = []
+            collected.append(
+                ConnectionDiagnosticResult(
+                    title: "iOS",
+                    status: .info,
+                    detail: ProcessInfo.processInfo.operatingSystemVersionString
+                )
+            )
             collected.append(self.pairingFileResult())
 
             let wifi = await self.wifiResult()
             collected.append(wifi)
 
-            let tcp = await self.tcpResult()
+            // Bonjour discovery can block for a few seconds; keep it off the
+            // main actor.
+            let port = await Task.detached {
+                RemotePairingPortResolver.resolve(targetIPAddress: DeviceConnectionContext.targetIPAddress)
+            }.value
+            collected.append(
+                ConnectionDiagnosticResult(
+                    title: "Remote Pairing ポート",
+                    status: .info,
+                    detail: RemotePairingPortResolver.lastAttemptDescription
+                )
+            )
+
+            let tcp = await self.tcpResult(port: port)
             collected.append(tcp)
 
             collected.append(
@@ -73,14 +92,14 @@ final class ConnectionDiagnostics: ObservableObject {
                 ConnectionDiagnosticResult(
                     title: "Developer Mode / Wi-Fi",
                     status: .info,
-                    detail: "RSD（49152）は Wi-Fi 接続中かつ Developer Mode が ON のときだけ開きます。設定 > プライバシーとセキュリティ > デベロッパモード、および Wi-Fi の接続を確認してください。"
+                    detail: "Remote Pairing サービスは Wi-Fi 接続中かつ Developer Mode が ON のときだけ開きます。設定 > プライバシーとセキュリティ > デベロッパモード、および Wi-Fi の接続を確認してください。"
                 )
             )
             collected.append(
                 ConnectionDiagnosticResult(
                     title: "ローカルネットワーク",
                     status: .info,
-                    detail: "初回接続時に「ローカルネットワーク」の許可を求められた場合は許可してください（設定 > プライバシーとセキュリティ > ローカルネットワーク）。拒否していると 10.7.0.1 に到達できません。"
+                    detail: "Remote Pairing のポートは Bonjour（`_remotepairing._tcp`）で自動検出します。初回に「ローカルネットワーク」の許可を求められたら許可してください（設定 > プライバシーとセキュリティ > ローカルネットワーク）。拒否するとポート検出に失敗し、49152 へのフォールバックになります。"
                 )
             )
 
@@ -212,7 +231,7 @@ final class ConnectionDiagnostics: ObservableObject {
         }
     }
 
-    private func tcpResult() async -> ConnectionDiagnosticResult {
+    private func tcpResult(port targetPort: UInt16) async -> ConnectionDiagnosticResult {
         let host = targetHost
         let portValue = targetPort
         return await withCheckedContinuation { continuation in
