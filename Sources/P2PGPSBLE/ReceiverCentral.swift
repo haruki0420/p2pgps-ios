@@ -541,6 +541,12 @@ extension ReceiverCentral: CBPeripheralDelegate {
         }
 
         // Spec §5: after connecting, read Status and write START (idempotent).
+        if locationCharacteristic == nil {
+            reportError("Location キャラクタリスティックが見つかりません。送信側のアプリを確認してください。")
+        }
+        if statusCharacteristic == nil {
+            reportError("Status キャラクタリスティックが見つかりません。送信側のアプリを確認してください。")
+        }
         if controlCharacteristic != nil {
             let stored = UserDefaults.standard.integer(forKey: SettingsKey.senderIntervalMilliseconds)
             let interval = stored > 0 ? UInt16(clamping: stored) : ControlCommand.defaultIntervalMilliseconds
@@ -576,6 +582,7 @@ extension ReceiverCentral: CBPeripheralDelegate {
     ) {
         if let error {
             log.warning("notify 購読に失敗 (\(characteristic.uuid)): \(error.localizedDescription)")
+            reportError("通知の購読に失敗しました（\(characteristic.uuid)）: \(error.localizedDescription)")
         }
     }
 
