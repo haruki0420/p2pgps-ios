@@ -162,6 +162,15 @@ UI の視覚世界・トークン・anti-slop ルールの正本はリポジト�
 3. `swift build --triple arm64-apple-ios17.0 --sdk $(xcrun --sdk iphoneos --show-sdk-path)` — iOS SDK に対する全モジュールのクロスビルド
 4. `brew install xcodegen` → `xcodegen generate` → `xcodebuild ... CODE_SIGNING_ALLOWED=NO build` — Xcode でのコンパイルと静的リンクまで検証
 
+## リリース成果物
+
+GitHub Releases に以下を添付しています（`.github/workflows/release-ipa.yml` で生成）。
+
+- `p2pgps-ios-<tag>-unsigned.ipa` — 未署名 IPA。SideStore / AltStore 等で署名してインストールしてください
+- `p2pgps-ios-<tag>-unsigned.ipa.sha256` — SHA-256 チェックサム
+
+未署名のためそのままではインストールできません。実機での動作検証は未実施です。
+
 ## Wiki
 
 `wiki/` に GitHub Wiki 用の Markdown を用意しています。GitHub の仕様で Wiki の初回ページだけは手動作成が必要です。
