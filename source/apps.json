@@ -22,6 +22,15 @@
       "screenshots": [],
       "versions": [
         {
+          "version": "1.0.9",
+          "date": "2026-11-15T09:06:31Z",
+          "localizedDescription": "シミュレート解除後に実測位置へ戻れなくなる問題を修正しました。",
+          "downloadURL": "https://github.com/haruki0420/p2pgps-ios/releases/download/v1.0.9/p2pgps-ios-v1.0.9-unsigned.ipa",
+          "size": 3350570,
+          "minOSVersion": "17.0",
+          "sha256": "feda9fa3cd5b7761222da84d36bb54f879ec2b82f550b79055ab9dd688806c19"
+        },
+        {
           "version": "1.0.8",
           "date": "2026-11-15T08:51:55Z",
           "localizedDescription": "シミュレート位置を大きく移動したときに反映されない問題を修正しました。",
@@ -80,6 +89,14 @@
     }
   ],
   "news": [
+    {
+      "title": "v1.0.9: p2pgps-ios v1.0.9",
+      "identifier": "v1.0.9",
+      "caption": "シミュレート解除後に実測位置へ戻れなくなる問題を修正しました。",
+      "date": "2026-11-15T09:06:31Z",
+      "tintColor": "#2F6B4F",
+      "url": "https://github.com/haruki0420/p2pgps-ios/releases/tag/v1.0.9"
+    },
     {
       "title": "v1.0.8: p2pgps-ios v1.0.8",
       "identifier": "v1.0.8",
