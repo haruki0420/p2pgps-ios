@@ -421,12 +421,25 @@ extension ReceiverCentral: CBCentralManagerDelegate {
                 connect(peripheral: peripheral, name: lastSenderName ?? peripheral.name ?? "P2P GPS")
             }
         case .poweredOff:
+            // CoreBluetooth does not deliver didDisconnectPeripheral when the
+            // radio is turned off, so tear down the link state explicitly.
+            log.warning("Bluetooth がオフになりました。接続状態をリセットします")
+            resetPeripheralState()
+            targetPeripheral = nil
+            isScanning = false
+            updateState(.idle)
             reportError("Bluetooth がオフです。設定から Bluetooth をオンにしてください。")
         case .unauthorized:
             reportError("Bluetooth の使用が許可されていません。設定 > プライバシーとセキュリティ > Bluetooth で許可してください。")
         case .unsupported:
             reportError("このデバイスは BLE に対応していません。")
-        case .resetting, .unknown:
+        case .resetting:
+            log.warning("Bluetooth がリセットされました。接続状態をリセットします")
+            resetPeripheralState()
+            targetPeripheral = nil
+            isScanning = false
+            updateState(.idle)
+        case .unknown:
             log.warning("Bluetooth の状態が不安定です (state=\(central.state.rawValue))")
         @unknown default:
             log.warning("未知の Bluetooth 状態です (state=\(central.state.rawValue))")

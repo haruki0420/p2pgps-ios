@@ -104,7 +104,14 @@ final class ReceiverController: ObservableObject {
         central.$state
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
-                guard let self, !state.isConnected, self.isInjecting else { return }
+                guard let self else { return }
+                if !state.isConnected {
+                    // Do not draw a trail across two different senders or
+                    // leave the map centered on a stale location.
+                    self.trail.removeAll()
+                    self.lastTrailAppend = .distantPast
+                }
+                guard !state.isConnected, self.isInjecting else { return }
                 self.log.info("送信元が切断されたため注入セッションを停止しました")
                 self.stopInjectionSession()
             }
@@ -129,7 +136,12 @@ final class ReceiverController: ObservableObject {
         engine.$isSimulating
             .receive(on: DispatchQueue.main)
             .sink { [weak self] simulating in
-                guard let self, !simulating else { return }
+                guard let self else { return }
+                if simulating {
+                    // A successful set() clears a transient error banner.
+                    self.errorMessage = nil
+                    return
+                }
                 // Same backend guard as above (review R-15).
                 if !self.settings.useTLocationURLSchemeFallback {
                     self.isInjecting = false
@@ -205,7 +217,10 @@ final class ReceiverController: ObservableObject {
         if wantsInjection {
             // The app's tunnel is only needed for DDI mounting, but starting it
             // here means the first injection attempt does not have to wait.
-            startTunnelAfterPendingLocationCommands()
+            // Route through the same guard as foreground retries so an active
+            // location-simulation session is never disturbed.
+            shouldAttemptTunnelReconnect = true
+            attemptDeferredTunnelReconnect(trigger: "Receiver 画面の表示")
         }
         if wantsInjection, let fix = central.latestFix {
             inject(fix)

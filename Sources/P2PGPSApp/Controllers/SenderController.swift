@@ -283,6 +283,7 @@ final class SenderController: ObservableObject {
 
         case .stop:
             isStreaming = false
+            location.stop()
             publishStatus(state: .idle)
             stopHeartbeat()
 
@@ -337,6 +338,7 @@ final class SenderController: ObservableObject {
         // advertising.
         if count == 0 && isStreaming {
             isStreaming = false
+            location.stop()
             publishStatus(state: .idle)
             stopHeartbeat()
             log.info("購読者がいなくなったため Idle に戻りました（アドバタイズは継続）")

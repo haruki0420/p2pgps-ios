@@ -184,6 +184,17 @@ final class JITEnableContext {
             throw makeError("Tunnel was created without valid handles")
         }
 
+        // `tunnel_create_rppairing` may update the pairing file in place
+        // (pair-setup). Persist the handle so the next session does not have to
+        // pair again; a write failure is not fatal for this tunnel.
+        let pairingPath = PairingFileStore.prepareURLOnce().path
+        if let writeError = rp_pairing_file_write(pairingFile, pairingPath) {
+            LogStore.shared.warning(
+                "pairing file の更新を保存できませんでした: \(IdeviceBridge.detail(from: writeError))"
+            )
+            idevice_error_free(writeError)
+        }
+
         return tunnel
     }
 

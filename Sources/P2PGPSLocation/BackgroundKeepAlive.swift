@@ -30,6 +30,10 @@ public final class BackgroundKeepAlive: NSObject, ObservableObject {
 
     private let manager = CLLocationManager()
     private let log = LogStore.shared
+    /// Whether the owner explicitly asked for the keep-alive session. The
+    /// authorization callback also fires when the manager is created, so it
+    /// must not start location updates on its own.
+    private var wantsRunning = false
 
     public override init() {
         super.init()
@@ -45,6 +49,7 @@ public final class BackgroundKeepAlive: NSObject, ObservableObject {
 
     /// Starts the keep-alive session, requesting authorization if needed.
     public func start() {
+        wantsRunning = true
         let status = manager.authorizationStatus
         if status == .notDetermined {
             manager.requestAlwaysAuthorization()
@@ -57,6 +62,7 @@ public final class BackgroundKeepAlive: NSObject, ObservableObject {
 
     /// Stops the keep-alive session.
     public func stop() {
+        wantsRunning = false
         guard isRunning else { return }
         manager.stopUpdatingLocation()
         isRunning = false
@@ -64,7 +70,7 @@ public final class BackgroundKeepAlive: NSObject, ObservableObject {
     }
 
     private func begin() {
-        guard !isRunning else { return }
+        guard wantsRunning, !isRunning else { return }
         isRunning = true
         manager.startUpdatingLocation()
         log.info("バックグラウンド維持用の位置情報を開始しました")
@@ -77,10 +83,8 @@ extension BackgroundKeepAlive: CLLocationManagerDelegate {
         // `.authorizedAlways` exists on both iOS and macOS; the "when in use"
         // case is checked through `p2pIsAuthorized` so this file compiles on
         // macOS as well.
-        if isRunning || manager.authorizationStatus == .authorizedAlways {
-            if manager.authorizationStatus.p2pIsAuthorized {
-                begin()
-            }
+        if wantsRunning, manager.authorizationStatus.p2pIsAuthorized {
+            begin()
         }
     }
 

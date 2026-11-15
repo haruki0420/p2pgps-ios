@@ -39,17 +39,22 @@ public final class TunnelManager: ObservableObject {
 
     private let queue = LocationSimulationCommandQueue.shared
     private let log = LogStore.shared
+    /// Incremented when the tunnel is invalidated so an in-flight start cannot
+    /// publish a stale "connected" state after its handles were freed.
+    private var generation = 0
 
     private init() {}
 
     /// Marks the tunnel as gone (e.g. after the VPN dropped or a failed start)
     /// and drops the cached FFI handles so the next start retries.
     public func markDisconnected() {
+        generation += 1
         queue.async {
             JITEnableContext.shared.invalidateTunnel()
         }
         runOnMain {
             self.isConnected = false
+            self.isStarting = false
         }
     }
 
@@ -72,11 +77,23 @@ public final class TunnelManager: ObservableObject {
             return
         }
 
+        // Rebuilding the RSD tunnel while the location-simulation session is
+        // using the single-occupancy endpoint causes errno 48 / session loss.
+        // Callers that genuinely need it (foreground retry) go through
+        // ReceiverController.attemptDeferredTunnelReconnect().
+        if LocationSimulationEngine.shared.isSimulating
+            || LocationSimulationEngine.shared.sessionOpen {
+            log.info("トンネル開始を保留: 位置シミュレーションが継続中")
+            return
+        }
+
+        guard !isConnected else { return }
         guard !isStarting else { return }
 
         isStarting = true
         lastError = nil
         lastTechnicalError = nil
+        let startGeneration = generation
 
         queue.async { [weak self] in
             let result: Result<Void, NSError>
@@ -88,12 +105,13 @@ public final class TunnelManager: ObservableObject {
             }
 
             DispatchQueue.main.async {
-                self?.finishStart(result)
+                self?.finishStart(result, generation: startGeneration)
             }
         }
     }
 
-    private func finishStart(_ result: Result<Void, NSError>) {
+    private func finishStart(_ result: Result<Void, NSError>, generation: Int) {
+        guard generation == self.generation else { return }
         isStarting = false
 
         switch result {

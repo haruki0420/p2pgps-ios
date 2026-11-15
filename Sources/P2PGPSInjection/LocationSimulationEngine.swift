@@ -252,23 +252,10 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
         return LocationSimulationStatus.locationSimulation
     }
 
-    // UNRESOLVED — ported verbatim from upstream; do not "fix" without checking
-    // upstream first.
-    //
-    // Dropping the remote-server handle here assumes `location_simulation_new`
-    // took ownership of it, so freeing it in `cleanup()` would be a double free.
-    // The header does not say that. The two mistakes are not symmetric: leaking
-    // a handle per session costs a socket, while freeing a handle the Rust side
-    // still owns is a double free and a crash on the success path of the app's
-    // main feature. Left exactly as upstream.
-    //
-    // REVIEW M6: this ownership question is still open. The leak (if any) is
-    // one socket per simulation session, so it is invisible in CI; it must be
-    // checked on a real device (open/close simulation repeatedly and watch the
-    // process' file descriptors with Instruments or `lsof`). See
-    // docs/architecture.md §4 "既知の未解決事項".
-    LocationSimulationState.remoteServer = nil
-
+    // The Rust implementation borrows the RemoteServerHandle
+    // (`&mut (*server).0`) and does not take ownership of it. Keep the handle
+    // and let cleanup() free it after the location-simulation handle, otherwise
+    // every session leaks the remote-server socket.
     LocationSimulationSession.set(open: true)
 
     let locationSetError = location_simulation_set(
@@ -510,7 +497,16 @@ public final class LocationSimulationEngine: ObservableObject {
             if code != LocationSimulationStatus.ok {
                 DispatchQueue.main.async {
                     self.sessionOpen = LocationSimulationSession.isOpen
+                    self.isSimulating = self.sessionOpen
                     self.lastError = Self.message(for: code)
+                    // A dead tunnel/session in the resend loop must be dropped
+                    // just like a failed set(), otherwise the engine keeps
+                    // claiming it is simulating and foreground retries are
+                    // deferred forever.
+                    if code == LocationSimulationStatus.providerCreate
+                        || code == LocationSimulationStatus.remoteServer {
+                        markTunnelDisconnected()
+                    }
                 }
             }
         }
