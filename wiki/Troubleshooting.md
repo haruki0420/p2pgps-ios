@@ -18,15 +18,26 @@
 
 ## トンネル接続に失敗する（Receiver）
 
-| エラー | 対処 |
+まず **診断** 画面 →「接続診断を実行」を押してください。次の項目を自動で確認します。
+
+- pairing file が RPPairing 形式か（lockdown のみのファイルでは接続できません）
+- Wi-Fi に接続しているか
+- `10.7.0.1:49152` に TCP 接続できるか
+
+結果と「トンネル / DDI」セクションの **FFI エラー**（code とメッセージ）が原因特定の手がかりになります。
+
+| 症状 / 診断結果 | 対処 |
 | :--- | :--- |
-| ポートが使用中 | 他の VPN / デバッグアプリを閉じ、LocalDevVPN を再接続。改善しなければ iPad を再起動。 |
-| 接続タイムアウト | Wi-Fi と LocalDevVPN が接続されているか確認。iPad をスリープ解除。 |
-| 経路がない | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON。 |
-| ターゲット IP が不正 | 設定のターゲット IP を `10.7.0.1` に戻す。 |
+| pairing file が「lockdown のみ」 | iloader でエクスポートし直す（RPPairing を含むファイル） |
+| Wi-Fi が「接続されていない」 | Wi-Fi に接続する（RSD は Wi-Fi 接続中のみ開放） |
+| TCP が「接続待ち / 失敗」 | LocalDevVPN が接続済みか、他の VPN が有効でないか確認。Developer Mode が ON か確認。ローカルネットワークの許可を確認 |
+| ポートが使用中 | 他の VPN / デバッグアプリを閉じ、LocalDevVPN を再接続。改善しなければ iPad を再起動 |
+| 接続タイムアウト | Wi-Fi と LocalDevVPN が接続されているか確認。iPad をスリープ解除 |
+| 経路がない | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON |
+| ターゲット IP が不正 | 設定のターゲット IP を `10.7.0.1` に戻す |
 | LocalDevVPN が使えない / 他の VPN と競合する | Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [Networking（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/wiki/Networking) を参照してください。 |
 
-> iOS で同時に使える VPN は 1 つだけです。LocalDevVPN を有効にすると他の VPN は切断されます。Wi-Fi に接続している必要もあります（RSD / lockdownd の仕様）。
+> iOS で同時に使える VPN は 1 つだけです。LocalDevVPN を有効にすると他の VPN は切断されます。Wi-Fi 接続と Developer Mode も必要です（RSD / lockdownd の仕様）。
 
 ## pairing file が無効 / 読み込めない
 
@@ -42,9 +53,8 @@
 
 ## iloader の「ペアリングファイルの管理」に P2P GPS が出ない
 
-- iloader v2.4.1 は対応アプリの一覧が固定で、P2P GPS はまだ一覧に含まれていません。上流に追加 PR を提出済みです（[nab138/iloader#1161](https://github.com/nab138/iloader/pull/1161)）。
-- それまでは **「エクスポート（非推奨）」** で pairing file を保存し、AirDrop / Files で iPad に置いて本アプリでインポートしてください。
-- マージ後は「配置」を押すだけで完了します。本アプリは Documents に置かれた pairing file を**アプリ起動時・フォアグラウンド復帰時・設定を開いたときに自動で読み込みます**（手動の場合は設定の「Documents から再読み込み」）。
+- iloader v2.4.1 は対応アプリの一覧が固定で、P2P GPS はまだ一覧に含まれていません。**「エクスポート（非推奨）」** で pairing file を保存し、AirDrop / Files で iPad に置いて本アプリでインポートしてください。
+- 本アプリは Documents に置かれた pairing file を**アプリ起動時・フォアグラウンド復帰時・設定を開いたときに自動で読み込みます**（手動の場合は設定の「Documents から再読み込み」）。
 - 期限切れの可能性があるため、取得し直してください。
 - 設定でいったん削除してから再インポートすると確実です。
 - pairing file は秘密情報です。共有・コミットしないでください。

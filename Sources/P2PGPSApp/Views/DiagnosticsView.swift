@@ -44,6 +44,9 @@ struct DiagnosticsView: View {
                         InjectionDiagnosticsRows(engine: engine)
                     }
                 }
+                Section("接続診断") {
+                    ConnectionDiagnosticsRows()
+                }
                 Section("トンネル / DDI") {
                     TunnelDiagnosticsRows()
                 }
@@ -203,6 +206,9 @@ private struct TunnelDiagnosticsRows: View {
             DiagnosticRow(label: "トンネル", value: tunnel.isConnected ? "接続済み" : (tunnel.isStarting ? "接続中" : "未接続"))
             DiagnosticRow(label: "ターゲット", value: "\(DeviceConnectionContext.targetIPAddress):49152")
             DiagnosticRow(label: "DDI マウント", value: mounting.isDeveloperDiskImageMounted ? "済み" : "未")
+            if let technical = tunnel.lastTechnicalError {
+                DiagnosticRow(label: "FFI エラー", value: technical)
+            }
             if let error = tunnel.lastError {
                 Text(error)
                     .font(P2PFont.caption)
@@ -213,6 +219,65 @@ private struct TunnelDiagnosticsRows: View {
                     .font(P2PFont.caption)
                     .foregroundStyle(P2PColor.danger)
             }
+        }
+    }
+}
+
+/// Runs the on-device connection diagnostics and renders the findings.
+private struct ConnectionDiagnosticsRows: View {
+    @StateObject private var diagnostics = ConnectionDiagnostics()
+
+    var body: some View {
+        Group {
+            Button {
+                diagnostics.run()
+            } label: {
+                Label(diagnostics.isRunning ? "診断中…" : "接続診断を実行", systemImage: "stethoscope")
+            }
+            .disabled(diagnostics.isRunning)
+
+            if let summary = diagnostics.summary {
+                Text(summary)
+                    .font(P2PFont.caption)
+                    .foregroundStyle(P2PColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            ForEach(diagnostics.results) { result in
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: icon(for: result.status))
+                        .font(.caption)
+                        .foregroundStyle(color(for: result.status))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(result.title)
+                            .font(P2PFont.labelEmphasis)
+                            .foregroundStyle(P2PColor.ink)
+                        Text(result.detail)
+                            .font(P2PFont.caption)
+                            .foregroundStyle(P2PColor.inkSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    private func icon(for status: ConnectionDiagnosticResult.Status) -> String {
+        switch status {
+        case .ok: return "checkmark.circle.fill"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .failure: return "xmark.octagon.fill"
+        case .info: return "info.circle"
+        }
+    }
+
+    private func color(for status: ConnectionDiagnosticResult.Status) -> Color {
+        switch status {
+        case .ok: return P2PColor.pine
+        case .warning: return P2PColor.amber
+        case .failure: return P2PColor.danger
+        case .info: return P2PColor.inkSecondary
         }
     }
 }

@@ -33,6 +33,9 @@ public final class TunnelManager: ObservableObject {
     @Published public private(set) var isConnected = false
     @Published public private(set) var isStarting = false
     @Published public private(set) var lastError: String?
+    /// Raw FFI error (code + message) for the Diagnostics screen. Never shown
+    /// as the primary user-facing message; it is the detail a bug report needs.
+    @Published public private(set) var lastTechnicalError: String?
 
     private let queue = LocationSimulationCommandQueue.shared
     private let log = LogStore.shared
@@ -73,6 +76,7 @@ public final class TunnelManager: ObservableObject {
 
         isStarting = true
         lastError = nil
+        lastTechnicalError = nil
 
         queue.async { [weak self] in
             let result: Result<Void, NSError>
@@ -96,11 +100,13 @@ public final class TunnelManager: ObservableObject {
         case .success:
             isConnected = true
             lastError = nil
+            lastTechnicalError = nil
             log.info("トンネル接続に成功しました (\(DeviceConnectionContext.targetIPAddress):49152)")
             mountDeveloperDiskImageIfNeeded()
         case .failure(let error):
             isConnected = false
             lastError = Self.recoveryMessage(for: error)
+            lastTechnicalError = "code \(error.code): \(error.localizedDescription)"
             log.error("トンネル接続に失敗しました: \(error.localizedDescription) (code \(error.code))")
             // Drop any stale handles so the next attempt really reconnects.
             queue.async {

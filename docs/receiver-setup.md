@@ -55,7 +55,7 @@ iloader は SideStore 用の **RPPairing / lockdown pairing file** を自動で�
 - すでに StikDebug / TLocation を使っている場合は、そのアプリの pairing file をエクスポートして使うこともできます（**必ず同じ iPad の pairing file** を使ってください）。
 - **期限切れ・ランダムに無効化された場合**: iloader で「Delete Stored Pairing」→ デバイスで Trust →「Manage Pairing File」→「Place」→ 再度エクスポート → 本アプリで再インポート、の順で復旧します。
 
-> **iloader の対応状況**: iloader v2.4.1 の「ペアリングファイルの管理」には、まだ **P2P GPS が一覧に表示されません**（対応アプリの一覧が固定のため）。上流に追加 PR を提出済みです（[nab138/iloader#1161](https://github.com/nab138/iloader/pull/1161)）。マージされるまでは、**「エクスポート（非推奨）」で pairing file を保存 → AirDrop / Files で iPad に置く → 本アプリでインポート**、の手順を使ってください。マージ後は「配置」を押すだけで完了します（本アプリは Documents に置かれた pairing file を自動で読み込みます）。
+> **iloader の対応状況**: iloader v2.4.1 の「ペアリングファイルの管理」には、まだ **P2P GPS が一覧に表示されません**（対応アプリの一覧が固定のため）。**「エクスポート（非推奨）」で pairing file を保存 → AirDrop / Files で iPad に置く → 本アプリでインポート**、の手順を使ってください。本アプリは Documents に置かれた pairing file も自動で読み込みます。
 
 > pairing file は秘密情報です。他人に共有したり、リポジトリにコミットしたりしないでください。本アプリは Application Support の `Pairing/` 配下に 0600・Data Protection（`completeUntilFirstUserAuthentication`）・バックアップ除外で保存し、Documents に残ったコピーは読み込み後に削除します。ログには出しません。
 
@@ -103,7 +103,9 @@ DDI の取得元: [doronz88/DeveloperDiskImage](https://github.com/doronz88/Deve
 | 症状 | 確認すること |
 | :--- | :--- |
 | 送信元が見つからない | iPhone 側で「送信を開始」しているか。Bluetooth が ON か。近距離か。 |
-| トンネル接続に失敗する | LocalDevVPN が接続中か。Wi-Fi に接続しているか。ターゲット IP が `10.7.0.1` か。 |
+| トンネル接続に失敗する | **診断画面 →「接続診断を実行」** で pairing file の形式・Wi-Fi・`10.7.0.1:49152` への TCP 到達性を確認。あわせて LocalDevVPN が接続中か、他の VPN が有効でないか、Developer Mode が ON か、ターゲット IP が `10.7.0.1` かを確認。 |
+| 診断で pairing file が「lockdown のみ」と出る | iloader でエクスポートし直し（RPPairing を含むファイル）、本アプリで再インポート。 |
+| 診断で TCP が「接続待ち / 失敗」と出る | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON。他の VPN を切断。ローカルネットワークの許可を確認。 |
 | pairing file が無効と言われる | iloader で pairing file を再配置・再エクスポートしてインポートし直す。期限切れの可能性。 |
 | SideStore でアプリが起動しない / 期限切れ | SideStore の「7 DAYS」をタップして更新。改善しなければ iloader から再インストール。 |
 | 「信頼されていない開発元」と表示される | 設定 > 一般 > VPN とデバイス管理 で開発元を信頼。 |
