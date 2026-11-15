@@ -20,6 +20,7 @@ import Foundation
 import SwiftUI
 #if SWIFT_PACKAGE
 import P2PGPSCore
+import P2PGPSInjection
 #endif
 
 struct RootView: View {
@@ -38,6 +39,12 @@ struct RootView: View {
             case .background:
                 receiver.handleScenePhaseBackground()
             case .active:
+                // iloader can place a pairing file into Documents over USB while
+                // the app is backgrounded; import it before the tunnel rebuild
+                // so the reconnect below sees it.
+                if PairingFileStore.importFromDocumentsIfPresent() {
+                    LogStore.shared.info("Documents の pairing file を自動で取り込みました")
+                }
                 sender.refreshAuthorization()
                 receiver.handleScenePhaseActive()
             default:

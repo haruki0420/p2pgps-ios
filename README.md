@@ -135,7 +135,7 @@ UI の視覚世界・トークン・anti-slop ルールの正本はリポジト�
 2. **LocalDevVPN** をインストールして接続（iPad 自身を `10.7.0.1` としてループバック）。
 3. **iloader で pairing file を注入**（Manage Pairing File → Place）し、エクスポートして iPad の Files に置く。
 4. SideStore で未署名 IPA（[Releases](https://github.com/haruki0420/p2pgps-ios/releases)）をインストール。
-5. アプリの設定から pairing file を読み込む。
+5. アプリの設定から pairing file を読み込む（iloader の「配置」で Documents に置かれた場合は自動で取り込みます）。
 6. **Developer Disk Image (DDI)** を設定画面からダウンロードしてマウント。
 
 受信側の手順:

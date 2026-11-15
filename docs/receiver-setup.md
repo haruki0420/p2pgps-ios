@@ -55,6 +55,8 @@ iloader は SideStore 用の **RPPairing / lockdown pairing file** を自動で�
 - すでに StikDebug / TLocation を使っている場合は、そのアプリの pairing file をエクスポートして使うこともできます（**必ず同じ iPad の pairing file** を使ってください）。
 - **期限切れ・ランダムに無効化された場合**: iloader で「Delete Stored Pairing」→ デバイスで Trust →「Manage Pairing File」→「Place」→ 再度エクスポート → 本アプリで再インポート、の順で復旧します。
 
+> **iloader の対応状況**: iloader v2.4.1 の「ペアリングファイルの管理」には、まだ **P2P GPS が一覧に表示されません**（対応アプリの一覧が固定のため）。上流に追加 PR を提出済みです（[nab138/iloader#1161](https://github.com/nab138/iloader/pull/1161)）。マージされるまでは、**「エクスポート（非推奨）」で pairing file を保存 → AirDrop / Files で iPad に置く → 本アプリでインポート**、の手順を使ってください。マージ後は「配置」を押すだけで完了します（本アプリは Documents に置かれた pairing file を自動で読み込みます）。
+
 > pairing file は秘密情報です。他人に共有したり、リポジトリにコミットしたりしないでください。本アプリは Application Support の `Pairing/` 配下に 0600・Data Protection（`completeUntilFirstUserAuthentication`）・バックアップ除外で保存し、Documents に残ったコピーは読み込み後に削除します。ログには出しません。
 
 ## 3. 本アプリ（p2pgps-ios）をインストール
@@ -69,6 +71,8 @@ iloader は SideStore 用の **RPPairing / lockdown pairing file** を自動で�
 1. P2P GPS を起動し「設定」を開きます。
 2. **「pairing file を読み込む」** → Files から手順 2 で保存したファイルを選択します（`.mobiledevicepairing` / `.mobiledevicepair` / `.plist` に対応）。
 3. 「読み込み済み」と表示されれば OK です。トンネルの再試行が自動で走ります。
+
+> iloader が今後「配置」に対応すると、Documents に置かれた pairing file は **アプリ起動時・フォアグラウンド復帰時・設定を開いたときに自動で読み込まれます**。手動で再読み込みしたい場合は、設定の「Documents から再読み込み」を押してください。
 
 ## 5. LocalDevVPN を接続
 

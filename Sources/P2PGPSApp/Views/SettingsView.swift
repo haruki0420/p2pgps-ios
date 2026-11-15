@@ -69,6 +69,11 @@ struct SettingsView: View {
             ) { result in
                 importPairingFile(result)
             }
+            .onAppear {
+                // iloader's "Place" writes into <App Documents>/pairingFile.plist;
+                // pick it up when Settings opens (review: automatic placement).
+                pairingPresent = PairingFileStore.importFromDocumentsIfPresent()
+            }
         }
         .tint(P2PColor.pine)
     }
@@ -133,6 +138,17 @@ struct SettingsView: View {
                 isShowingPairingImporter = true
             } label: {
                 Label("pairing file を読み込む", systemImage: "doc.badge.plus")
+            }
+
+            Button {
+                if PairingFileStore.importFromDocumentsIfPresent() {
+                    pairingPresent = true
+                    infoMessage = "Documents に置かれた pairing file を読み込みました。"
+                } else {
+                    infoMessage = "Documents に pairing file が見つかりません。"
+                }
+            } label: {
+                Label("Documents から再読み込み", systemImage: "arrow.clockwise")
             }
 
             if pairingPresent {
@@ -209,7 +225,7 @@ struct SettingsView: View {
         } header: {
             Text("位置注入")
         } footer: {
-            Text("pairing file と DDI は位置注入に必須です。DDI は doronz88/DeveloperDiskImage の固定コミット（\(DeveloperDiskImageService.upstreamCommit.prefix(7))…）から取得し、SHA-256 を検証します。URL スキーム委譲を有効にすると、別途インストールした TLocation に注入を任せます。")
+            Text("pairing file と DDI は位置注入に必須です。DDI は doronz88/DeveloperDiskImage の固定コミット（\(DeveloperDiskImageService.upstreamCommit.prefix(7))…）から取得し、SHA-256 を検証します。iloader の「配置」で Documents に置かれた pairing file は、アプリ起動時・設定を開いたときに自動で読み込みます。URL スキーム委譲を有効にすると、別途インストールした TLocation に注入を任せます。")
         }
     }
 

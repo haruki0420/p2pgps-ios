@@ -20,12 +20,18 @@ import Foundation
 import SwiftUI
 #if SWIFT_PACKAGE
 import P2PGPSCore
+import P2PGPSInjection
 #endif
 
 @main
 struct P2PGPSiOSApp: App {
     init() {
         LogStore.shared.info("P2P GPS を起動しました")
+        // Pick up a pairing file that iloader (or another tool) placed in the
+        // app's Documents directory while the app was not running.
+        if PairingFileStore.importFromDocumentsIfPresent() {
+            LogStore.shared.info("Documents に置かれた pairing file を自動で取り込みました")
+        }
     }
 
     var body: some Scene {

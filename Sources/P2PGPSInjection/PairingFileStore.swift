@@ -133,6 +133,30 @@ public enum PairingFileStore {
         try replace(with: sourceURL, fileManager: fileManager)
     }
 
+    /// Imports a pairing file that an external tool placed in the app's
+    /// Documents directory, then moves it to the protected Application Support
+    /// location.
+    ///
+    /// iloader's "Place" button writes the pairing file into
+    /// `<App Documents>/pairingFile.plist` via House Arrest. This method picks
+    /// that file up automatically (at launch / when the app becomes active /
+    /// when Settings opens) so the user does not have to import it by hand.
+    ///
+    /// Returns `true` when a pairing file is present after the migration.
+    @discardableResult
+    public static func importFromDocumentsIfPresent(fileManager: FileManager = .default) -> Bool {
+        guard documentSourceURL(fileManager: fileManager) != nil else {
+            return isPresent
+        }
+        prepareURL(fileManager: fileManager)
+        invalidateCache()
+        let imported = isPresent
+        if imported {
+            log.info("Documents に置かれた pairing file を自動で読み込みました（iloader 等）")
+        }
+        return imported
+    }
+
     /// Deletes the stored pairing file (and legacy copies).
     public static func remove(fileManager: FileManager = .default) throws {
         let destination = prepareURL(fileManager: fileManager)
