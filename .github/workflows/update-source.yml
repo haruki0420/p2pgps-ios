@@ -4,9 +4,9 @@ name: Update SideStore source
 # Release IPA build succeeds, so SideStore users see the new version without a
 # manual JSON edit. The file is committed to `main`.
 #
-# NOTE: SideStore can only read the source over a *public* URL. If this
-# repository is private, either make it public or mirror `source/apps.json`
-# (and the IPA assets) to a public repository — see docs/source.md.
+# NOTE: SideStore can only read the source over a *public* URL. This repository
+# is public, so `source/apps.json` and the IPA assets are served directly from
+# GitHub — see docs/source.md.
 
 on:
   workflow_run:
