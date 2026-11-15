@@ -1,0 +1,82 @@
+name: Update SideStore source
+
+# Regenerates `source/apps.json` (AltStore / SideStore source format) whenever a
+# Release IPA build succeeds, so SideStore users see the new version without a
+# manual JSON edit. The file is committed to `main`.
+#
+# NOTE: SideStore can only read the source over a *public* URL. If this
+# repository is private, either make it public or mirror `source/apps.json`
+# (and the IPA assets) to a public repository — see docs/source.md.
+
+on:
+  workflow_run:
+    workflows: ["Release IPA"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (empty = latest release)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-sidestore-source
+  cancel-in-progress: true
+
+jobs:
+  update-source:
+    name: Regenerate apps.json
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')
+          fi
+          if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
+            echo "No release found; nothing to do." >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: $TAG"
+
+      - name: Regenerate source JSON
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 scripts/generate_source.py \
+            --tag "${{ steps.tag.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --output source/apps.json
+
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- source/apps.json; then
+            echo "source/apps.json is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/apps.json
+          git commit -m "chore: update SideStore source for ${{ steps.tag.outputs.tag }}"
+          git push origin main

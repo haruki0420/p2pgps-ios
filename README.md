@@ -37,6 +37,18 @@ iPhone（または Android）で取得した GPS 位置を **BLE GATT** で iPad
    - Settings: pairing file、DDI、LocalDevVPN への導線、ターゲット IP（既定 `10.7.0.1`）、自動再接続、送信間隔、Extended、バックグラウンド維持（受信側）、ログ桁数。
    - Diagnostics: 受信パケット hex、Status / Extended hex、FFI セッション状態、トンネル / DDI 状態、メモリ内ログの共有。
 
+## SideStore / AltStore ソース（自動更新）
+
+`source/apps.json` は SideStore / AltStore のソース形式です。リポジトリを public にするか公開用リポジトリにミラーすると、SideStore の Sources に次の URL を追加するだけで、新バージョンが自動で一覧に表示されます。
+
+```
+https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
+```
+
+- `.github/workflows/update-source.yml` が **Release IPA の成功後**に `source/apps.json` を自動更新します。
+- ソースの更新は自動ですが、アプリのインストール（更新）は SideStore 上でユーザーがタップする必要があります（iOS サイドロードの制約）。
+- 公開 URL の用意方法（public 化 / 公開用リポジトリ / GitHub Pages）と AGPL の注意は [docs/source.md](docs/source.md) を参照してください。
+
 ## ディレクトリ構成
 
 ```text
@@ -49,7 +61,9 @@ p2pgps-ios/
 ├── Vendor/idevice/              # include/ に idevice.h + module.modulemap（MIT）。LICENSE 同梱。.a は fetch スクリプトで取得（StikDebug のビルド）
 ├── scripts/
 │   ├── fetch-vendor.sh          # libidevice_ffi.a の取得 + SHA-256 検証（macOS/Linux/WSL）
-│   └── fetch-vendor.ps1         # 同（Windows PowerShell）
+│   ├── fetch-vendor.ps1         # 同（Windows PowerShell）
+│   └── generate_source.py       # SideStore / AltStore ソース（source/apps.json）の生成
+├── source/apps.json             # SideStore / AltStore ソース（自動更新）
 ├── Sources/
 │   ├── P2PGPSProtocol/          # 純粋 Swift: UUID / LocationPacket / Extended / Control / Status / 検証
 │   ├── P2PGPSCore/              # GPSFix / FixFilter / AppSettings / LogStore / AppRole（Foundation のみ）
@@ -77,7 +91,7 @@ bash scripts/fetch-vendor.sh
 pwsh -File scripts/fetch-vendor.ps1
 ```
 
-期待する SHA-256: `6524066D54EF23E00D46445C04DFC694E180196D54119D718F68434FA225BE35`
+期待する SHA-256: `4DB23FE1D342927B9480BB9A8577F219994365621DC28AA0018E23EA1990ECC8`
 
 ### 2. テスト（macOS / Linux の Swift ツールチェーン）
 
