@@ -27,6 +27,8 @@ iPad 側で位置情報を「別の場所」に固定するには、Apple の De
 3. 接続中はステータスバーに VPN アイコンが表示されます。
 4. LocalDevVPN は iPad 自身を `10.7.0.1` として公開します。アプリの設定のターゲット IP が `10.7.0.1` であることを確認してください。
 
+> LocalDevVPN が使えない場合（他の VPN と競合する、Tailscale を常時使いたい等）は、Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [ネットワーク構成（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/blob/main/docs/networking.md) を参照してください。
+
 ## 3. pairing file を用意する
 
 pairing file は、この iPad 自身のペアリングレコードです。取得方法はいくつかあります。

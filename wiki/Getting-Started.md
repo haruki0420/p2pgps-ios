@@ -62,6 +62,8 @@ swift test
 3. **pairing file**: `.mobiledevicepairing` を用意し、アプリの「設定」→「pairing file を読み込む」。
 4. **DDI**: 「設定」→「DDI をダウンロード」→ 自動でマウント。
 
+> LocalDevVPN が使えない場合（他の VPN と競合する、Tailscale を常時使いたい等）は、Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [Networking（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/wiki/Networking) を参照してください。
+
 詳しい手順: [docs/receiver-setup.md](https://github.com/haruki0420/p2pgps-ios/blob/main/docs/receiver-setup.md)
 
 ## 7. 位置を反映する

@@ -178,6 +178,8 @@ GitHub Releases に以下を添付しています（`.github/workflows/release-i
 1. https://github.com/haruki0420/p2pgps-ios/wiki を開き「Create the first page」→ そのまま Save。
 2. `./scripts/publish-wiki.sh` を実行すると `wiki/*.md` が Wiki に同期されます。
 
+用語（DDI・pairing file・BLE など）がわからない場合は [p2pgps Wiki の用語集](https://github.com/haruki0420/p2pgps/wiki/Glossary) を、LocalDevVPN の仕組みや Tailscale などの代替手段は [ネットワーク構成](https://github.com/haruki0420/p2pgps/blob/main/docs/networking.md) を参照してください。
+
 ## 既知の制約
 
 - **実機・シミュレータでの動作検証は未実施**です。この開発環境には Xcode / Swift / iOS 実機がなく、CI はコンパイルとリンクのみを保証します。BLE・位置注入・UI の実動作は実機で確認してください。

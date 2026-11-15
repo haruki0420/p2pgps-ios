@@ -24,6 +24,9 @@
 | 接続タイムアウト | Wi-Fi と LocalDevVPN が接続されているか確認。iPad をスリープ解除。 |
 | 経路がない | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON。 |
 | ターゲット IP が不正 | 設定のターゲット IP を `10.7.0.1` に戻す。 |
+| LocalDevVPN が使えない / 他の VPN と競合する | Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [Networking（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/wiki/Networking) を参照してください。 |
+
+> iOS で同時に使える VPN は 1 つだけです。LocalDevVPN を有効にすると他の VPN は切断されます。Wi-Fi に接続している必要もあります（RSD / lockdownd の仕様）。
 
 ## pairing file が無効 / 読み込めない
 
