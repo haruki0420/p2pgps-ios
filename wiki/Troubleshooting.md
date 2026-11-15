@@ -46,6 +46,15 @@
 - **iloader** で「Delete Stored Pairing」→ デバイスで Trust →「Manage Pairing File」→「Place」→ 再度エクスポート → 本アプリで再インポート、の順で復旧してください。
 - pairing file は Apple 側の都合でランダムに期限切れになることがあります。
 
+## iOS 27 で ConnectionReset（code 54）になる
+
+iOS 27 では、iloader の pairing file（lockdown + RPPairing の結合ファイル）が RSD ハンドシェイクで拒否されることがあります。
+
+1. [idevice_pair](https://github.com/jkcoxson/idevice_pair/releases) を起動（Windows は iTunes / usbmuxd が必要）
+2. デバイスを選択 → **Remote pairing** → **Create** → **Validate**
+3. **Save to file…** で保存 → 本アプリの Settings で古い pairing file を削除 → 新しいファイルをインポート
+4. 改善しない場合はアプリを完全に削除 → iPad を再起動 → 再インストール → 新しい pairing file をインポート
+
 ## SideStore / アプリが起動しない・期限切れ
 
 - 無料の Apple ID では SideStore とインストールしたアプリは **7 日で期限切れ**になります。SideStore の「My Apps」で「7 DAYS」をタップして更新してください。

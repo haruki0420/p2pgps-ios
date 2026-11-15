@@ -44,11 +44,11 @@ struct DiagnosticsView: View {
                         InjectionDiagnosticsRows(engine: engine)
                     }
                 }
-                Section("接続診断") {
-                    ConnectionDiagnosticsRows()
-                }
                 Section("トンネル / DDI") {
                     TunnelDiagnosticsRows()
+                }
+                Section("接続診断") {
+                    ConnectionDiagnosticsRows()
                 }
                 Section("ログ") {
                     LogDiagnosticsRows()
@@ -206,10 +206,16 @@ private struct TunnelDiagnosticsRows: View {
             DiagnosticRow(label: "トンネル", value: tunnel.isConnected ? "接続済み" : (tunnel.isStarting ? "接続中" : "未接続"))
             DiagnosticRow(label: "ターゲット", value: RemotePairingPortResolver.lastAttemptDescription)
             DiagnosticRow(label: "DDI マウント", value: mounting.isDeveloperDiskImageMounted ? "済み" : "未")
+            Button {
+                TunnelManager.shared.start()
+            } label: {
+                Label("トンネルを再試行", systemImage: "arrow.clockwise")
+            }
+            .disabled(tunnel.isStarting)
             if let technical = tunnel.lastTechnicalError {
                 DiagnosticRow(label: "FFI エラー", value: technical)
                 if technical.contains("ConnectionReset") || technical.contains("code: 54") {
-                    Text("RSD が接続をリセットしました。pairing file を iloader で再生成（Delete Stored Pairing → Place → エクスポート）してから再インポートするか、LocalDevVPN を再接続して再試行してください。")
+                    Text("RSD が接続をリセットしました。iOS 27 では iloader の pairing file が合わないことがあります。idevice_pair（https://github.com/jkcoxson/idevice_pair/releases）で RPPairing を作り直し、設定で古い pairing file を削除してから再インポートしてください。改善しない場合はアプリを完全に削除 → iPad を再起動 → 再インストールも試してください。")
                         .font(P2PFont.caption)
                         .foregroundStyle(P2PColor.amber)
                         .fixedSize(horizontal: false, vertical: true)

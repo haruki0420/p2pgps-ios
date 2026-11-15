@@ -1,0 +1,93 @@
+name: Verify version
+
+# Guards against the two version bugs we hit:
+#   1. an IPA whose Info.plist version does not match the release tag
+#   2. a hard-coded app version in the UI (Home footer / Settings)
+#
+# Runs on every push (source check) and after every "Release IPA" run
+# (IPA check). Can also be dispatched manually with a tag.
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["Release IPA"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (empty = latest release)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  source-check:
+    name: Source has no hard-coded version
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check UI version comes from the bundle
+        run: |
+          set -euo pipefail
+          echo "Checking for hard-coded version strings in UI sources…"
+          if grep -rnE 'Text\("v?1\.[0-9]+\.[0-9]+' Sources/P2PGPSApp/Views/; then
+            echo "error: hard-coded app version in a view; read CFBundleShortVersionString instead" >&2
+            exit 1
+          fi
+          grep -q 'CFBundleShortVersionString' Sources/P2PGPSApp/Views/HomeView.swift
+          grep -q 'CFBundleShortVersionString' Sources/P2PGPSApp/Views/SettingsView.swift
+          echo "OK: HomeView / SettingsView read the bundle version"
+
+  ipa-check:
+    name: IPA version matches release tag
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')
+          fi
+          if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
+            echo "No release found." >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: $TAG"
+
+      - name: Download IPA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p ipa
+          gh release download "${{ steps.tag.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --pattern '*.ipa' \
+            --dir ipa \
+            --clobber
+          ls -l ipa
+
+      - name: Verify IPA
+        run: |
+          set -euo pipefail
+          IPA=$(find ipa -maxdepth 1 -name '*.ipa' | head -n 1)
+          python3 scripts/verify_version.py --ipa "$IPA" --tag "${{ steps.tag.outputs.tag }}"

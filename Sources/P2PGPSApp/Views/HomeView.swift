@@ -84,7 +84,7 @@ struct HomeView: View {
                     Text("座標は端末外に送りません")
                         .font(P2PFont.caption)
                         .foregroundStyle(P2PColor.inkSecondary)
-                    Text("v1.0.0 / AGPL-3.0")
+                    Text("v\(appVersion) / AGPL-3.0")
                         .font(P2PFont.caption)
                         .foregroundStyle(P2PColor.inkSecondary)
                 }
@@ -107,6 +107,9 @@ struct HomeView: View {
                 senderPeripheral: sender.peripheral
             )
         }
+    }
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
     }
 }
 #endif
