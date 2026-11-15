@@ -22,6 +22,15 @@
       "screenshots": [],
       "versions": [
         {
+          "version": "1.0.5",
+          "date": "2026-11-15T06:43:23Z",
+          "localizedDescription": "バージョン表記と診断まわりの修正リリースです。",
+          "downloadURL": "https://github.com/haruki0420/p2pgps-ios/releases/download/v1.0.5/p2pgps-ios-v1.0.5-unsigned.ipa",
+          "size": 3346054,
+          "minOSVersion": "17.0",
+          "sha256": "d76962b73003a8be4986ad45d157af5dbe1d93d08d72ec94d7d34ca04a3cb8c1"
+        },
+        {
           "version": "1.0.4",
           "date": "2026-11-15T06:08:06Z",
           "localizedDescription": "iPadOS 26 でトンネル接続が `ConnectionReset` になる問題を修正したリリースです。",
@@ -44,6 +53,14 @@
     }
   ],
   "news": [
+    {
+      "title": "v1.0.5: p2pgps-ios v1.0.5",
+      "identifier": "v1.0.5",
+      "caption": "バージョン表記と診断まわりの修正リリースです。",
+      "date": "2026-11-15T06:43:23Z",
+      "tintColor": "#2F6B4F",
+      "url": "https://github.com/haruki0420/p2pgps-ios/releases/tag/v1.0.5"
+    },
     {
       "title": "v1.0.4: p2pgps-ios v1.0.4",
       "identifier": "v1.0.4",
