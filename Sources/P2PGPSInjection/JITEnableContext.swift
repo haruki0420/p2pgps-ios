@@ -20,6 +20,9 @@
 import Darwin
 import Foundation
 import idevice
+#if SWIFT_PACKAGE
+import P2PGPSCore
+#endif
 
 /// Owns the app's long-lived RSD tunnel to `<targetIP>:<discovered RSD port>`.
 ///
