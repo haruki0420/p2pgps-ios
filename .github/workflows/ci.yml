@@ -8,6 +8,7 @@ on:
       - "wiki/**"
       - "LICENSE"
       - "NOTICE"
+      - "source/**"
   pull_request:
     branches: ["main"]
     paths-ignore:
@@ -15,6 +16,7 @@ on:
       - "wiki/**"
       - "LICENSE"
       - "NOTICE"
+      - "source/**"
   workflow_dispatch:
 
 concurrency:
