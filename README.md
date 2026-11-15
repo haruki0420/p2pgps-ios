@@ -1,6 +1,5 @@
 # P2P GPS for iOS / iPadOS
 
-[![CI](https://github.com/haruki0420/p2pgps-ios/actions/workflows/ci.yml/badge.svg)](https://github.com/haruki0420/p2pgps-ios/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 
 iPhone（または Android）で取得した GPS 位置を **BLE GATT** で iPad に転送し、iPad 上で「その位置にいる」ように位置情報を反映するアプリです。クラウドを介さない P2P で、座標は端末外に送りません。
