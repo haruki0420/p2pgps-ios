@@ -100,6 +100,38 @@ final class FixFilterTests: XCTestCase {
         XCTAssertEqual(accepted.longitude, -0.12, accuracy: 1e-9)
     }
 
+    func testRelocationIsAcceptedAfterThreeConsistentFixes() {
+        var filter = FixFilter()
+        let now = Date()
+        _ = filter.process(makeFix(latitude: 35.0, longitude: 139.0, timestamp: now))
+
+        let newLatitude = 51.5
+        let newLongitude = -0.12
+        for offset in 1...2 {
+            let fix = makeFix(
+                latitude: newLatitude,
+                longitude: newLongitude,
+                timestamp: now.addingTimeInterval(Double(offset))
+            )
+            guard case .rejected(.implausibleJump) = filter.process(fix) else {
+                XCTFail("移動直後の fix は瞬間移動として拒否されるべき")
+                return
+            }
+        }
+
+        let third = makeFix(
+            latitude: newLatitude,
+            longitude: newLongitude,
+            timestamp: now.addingTimeInterval(3)
+        )
+        guard case .accepted(let accepted) = filter.process(third) else {
+            XCTFail("同じ位置が 3 回続いたら移転として受理されるべき")
+            return
+        }
+        XCTAssertEqual(accepted.latitude, newLatitude, accuracy: 1e-9)
+        XCTAssertEqual(accepted.longitude, newLongitude, accuracy: 1e-9)
+    }
+
     func testStaleFixIsAcceptedButFlagged() {        var filter = FixFilter()
         let old = Date().addingTimeInterval(-25 * 60 * 60)
         let fix = makeFix(latitude: 35.0, longitude: 139.0, timestamp: old)

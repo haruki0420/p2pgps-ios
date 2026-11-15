@@ -76,6 +76,10 @@ public struct FixFilter: Sendable {
     public var configuration: Configuration
     /// The last fix that was accepted, used as the smoothing anchor.
     public private(set) var lastAccepted: GPSFix?
+    /// Candidate fix for a legitimate relocation (see `process`).
+    private var relocationCandidate: GPSFix?
+    /// Number of consecutive fixes that agree with `relocationCandidate`.
+    private var relocationRejectCount: Int = 0
     /// Number of fixes accepted / rejected so far.
     public private(set) var acceptedCount: Int = 0
     public private(set) var rejectedCount: Int = 0
@@ -117,8 +121,28 @@ public struct FixFilter: Sendable {
 
         let interval = max(fix.timestamp.timeIntervalSince(previous.timestamp), 0.001)
         if distance / interval > configuration.maximumSpeedMetersPerSecond {
+            // A real sender can legitimately relocate (e.g. the debug simulate
+            // is cleared and the device's real GPS is far from the simulated
+            // position). Rejecting every frame forever would leave the receiver
+            // stuck at the old anchor, so accept a relocation once three
+            // consecutive fixes agree with each other.
+            if let candidate = relocationCandidate,
+               candidate.distance(to: fix) < 1_000 {
+                relocationRejectCount += 1
+            } else {
+                relocationRejectCount = 1
+            }
+            relocationCandidate = fix
+            if relocationRejectCount >= 3 {
+                relocationCandidate = nil
+                relocationRejectCount = 0
+                return accept(fix)
+            }
             return reject(.implausibleJump(distanceMeters: distance, timeInterval: interval))
         }
+
+        relocationCandidate = nil
+        relocationRejectCount = 0
 
         // Trust a precise fix more than an imprecise one: when the new fix is
         // noisier than the anchor, move towards it less.
@@ -139,10 +163,14 @@ public struct FixFilter: Sendable {
     /// Forgets the smoothing anchor (e.g. after a disconnect).
     public mutating func reset() {
         lastAccepted = nil
+        relocationCandidate = nil
+        relocationRejectCount = 0
     }
 
     private mutating func accept(_ fix: GPSFix) -> FixFilterDecision {
         lastAccepted = fix
+        relocationCandidate = nil
+        relocationRejectCount = 0
         acceptedCount += 1
         return .accepted(fix)
     }
