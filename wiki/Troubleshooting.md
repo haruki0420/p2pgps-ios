@@ -31,7 +31,7 @@
 ## pairing file が通らない
 
 - 設定で pairing file を読み込み直す。
-- iOS 27 では、iloader の pairing file が通らないことがあります。**`idevice_pair--windows-x86_64`（Windows x86_64 版）** で作り直してください。
+- iOS 27 では、iloader の pairing file が通らないことがあります。**`idevice_pair--windows-x86_64`（Windows x86_64 版）** で作り直してください。これは pairing file を作り直すツールです。
 - 手順: [idevice_pair](https://github.com/jkcoxson/idevice_pair/releases) → Remote pairing → Create → Validate → Save to file → アプリで読み込み直す。
 
 ## 詳しい情報（開発者向け）

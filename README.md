@@ -13,7 +13,7 @@ iPhone から現在地を送り、iPad の位置として使えるようにす�
 1. iPad にアプリを入れる
 2. iPad の設定で Developer Mode を ON、LocalDevVPN を接続
 3. pairing file を読み込む
-4. DDI をダウンロードしてマウント
+4. DDI をダウンロードして使える状態にする
 5. 送信側のスマホで「送信を開始」
 6. iPad 側で送信元を選び、「位置情報を反映」を ON
 

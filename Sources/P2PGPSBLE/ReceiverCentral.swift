@@ -532,7 +532,7 @@ extension ReceiverCentral: CBCentralManagerDelegate {
 extension ReceiverCentral: CBPeripheralDelegate {
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         if let error {
-            reportError("サービスの探索に失敗しました: \(error.localizedDescription)")
+            reportError("Bluetooth の接続先が見つかりませんでした。送信側のアプリを確認してください。")
             return
         }
         guard let service = peripheral.services?.first(where: { $0.uuid == BLEUUID.service }) else {
@@ -551,7 +551,7 @@ extension ReceiverCentral: CBPeripheralDelegate {
         error: Error?
     ) {
         if let error {
-            reportError("キャラクタリスティックの探索に失敗しました: \(error.localizedDescription)")
+            reportError("Bluetooth の設定を読み取れませんでした。送信側のアプリを確認してください。")
             return
         }
         for characteristic in service.characteristics ?? [] {
@@ -573,17 +573,17 @@ extension ReceiverCentral: CBPeripheralDelegate {
 
         // Spec §5: after connecting, read Status and write START (idempotent).
         if locationCharacteristic == nil {
-            reportError("Location キャラクタリスティックが見つかりません。送信側のアプリを確認してください。")
+            reportError("この iPad は必要な Bluetooth 機能に対応していません。")
         }
         if statusCharacteristic == nil {
-            reportError("Status キャラクタリスティックが見つかりません。送信側のアプリを確認してください。")
+            reportError("この iPad は必要な Bluetooth 機能に対応していません。")
         }
         if controlCharacteristic != nil {
             let stored = UserDefaults.standard.integer(forKey: SettingsKey.senderIntervalMilliseconds)
             let interval = stored > 0 ? UInt16(clamping: stored) : ControlCommand.defaultIntervalMilliseconds
             send(.start(intervalMilliseconds: interval))
         } else {
-            reportError("Control キャラクタリスティックが見つかりません。送信側の実装を確認してください。")
+            reportError("この iPad は必要な Bluetooth 機能に対応していません。")
         }
     }
 
@@ -613,7 +613,7 @@ extension ReceiverCentral: CBPeripheralDelegate {
     ) {
         if let error {
             log.warning("notify 購読に失敗 (\(characteristic.uuid)): \(error.localizedDescription)")
-            reportError("通知の購読に失敗しました（\(characteristic.uuid)）: \(error.localizedDescription)")
+            reportError("位置情報の受信設定に失敗しました。もう一度接続してください。")
         } else {
             log.info("通知購読: \(characteristic.uuid) isNotifying=\(characteristic.isNotifying)")
         }
