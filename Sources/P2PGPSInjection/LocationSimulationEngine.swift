@@ -183,6 +183,7 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
     }
 
     var pairingHandle: OpaquePointer?
+    let originalPairingData = try? Data(contentsOf: URL(fileURLWithPath: pairingFile))
     let pairingError = pairingFile.withCString { rp_pairing_file_read($0, &pairingHandle) }
     if let pairingError {
         LogStore.shared.error(
@@ -223,6 +224,20 @@ func simulate_location(_ deviceIP: String, _ latitude: Double, _ longitude: Doub
         idevice_error_free(providerError)
         LocationSimulationState.cleanup()
         return LocationSimulationStatus.providerCreate
+    }
+
+    // `tunnel_create_rppairing` may update the pairing file in place. Persist
+    // it only if the file was not replaced while the tunnel was being created.
+    let currentPairingData = try? Data(contentsOf: URL(fileURLWithPath: pairingFile))
+    if currentPairingData == originalPairingData {
+        if let writeError = rp_pairing_file_write(pairingHandle, pairingFile) {
+            LogStore.shared.warning(
+                "simulate_location: pairing file の更新を保存できませんでした — \(IdeviceBridge.detail(from: writeError))"
+            )
+            idevice_error_free(writeError)
+        }
+    } else {
+        LogStore.shared.info("simulate_location: pairing file が作成中に置き換わったため、更新の書き戻しをスキップしました")
     }
 
     let remoteServerError = remote_server_connect_rsd(

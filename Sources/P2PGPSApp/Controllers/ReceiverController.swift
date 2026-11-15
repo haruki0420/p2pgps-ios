@@ -58,6 +58,7 @@ final class ReceiverController: ObservableObject {
     private var lastInjectedCoordinate: CLLocationCoordinate2D?
     private var lastURLSchemeDelegation = Date.distantPast
     private var isKeepAliveRunning = false
+    private var lastEngineSimulating = false
     private var shouldAttemptTunnelReconnect = false
     /// Which backends this process has asked to simulate a coordinate on.
     ///
@@ -138,10 +139,15 @@ final class ReceiverController: ObservableObject {
             .sink { [weak self] simulating in
                 guard let self else { return }
                 if simulating {
-                    // A successful set() clears a transient error banner.
-                    self.errorMessage = nil
+                    // Clear a transient error only on the recovery transition,
+                    // not on every 5 s resend tick.
+                    if !self.lastEngineSimulating {
+                        self.errorMessage = nil
+                    }
+                    self.lastEngineSimulating = true
                     return
                 }
+                self.lastEngineSimulating = false
                 // Same backend guard as above (review R-15).
                 if !self.settings.useTLocationURLSchemeFallback {
                     self.isInjecting = false
