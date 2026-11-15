@@ -129,12 +129,14 @@ UI の視覚世界・トークン・anti-slop ルールの正本はリポジト�
 
 ## iPad（Receiver）のセットアップ
 
-位置注入には次の 4 つが必要です。詳細手順は [docs/receiver-setup.md](docs/receiver-setup.md) を参照してください。
+初回セットアップは **Windows / macOS / Linux のコンピュータ + iloader** で SideStore を入れ、pairing file を注入する流れを前提としています（Mac は不要）。詳細手順は [docs/receiver-setup.md](docs/receiver-setup.md) を参照してください。
 
-1. **Developer Mode** を有効化（設定 > プライバシーとセキュリティ > デベロッパモード）。
+1. **iloader** で SideStore をインストール（[iloader.app](https://iloader.app)）→ 開発元を信頼 → **Developer Mode** を ON。
 2. **LocalDevVPN** をインストールして接続（iPad 自身を `10.7.0.1` としてループバック）。
-3. **pairing file**（`.mobiledevicepairing`）を用意し、アプリの設定から読み込む。
-4. **Developer Disk Image (DDI)** を設定画面からダウンロードしてマウント。
+3. **iloader で pairing file を注入**（Manage Pairing File → Place）し、エクスポートして iPad の Files に置く。
+4. SideStore で未署名 IPA（[Releases](https://github.com/haruki0420/p2pgps-ios/releases)）をインストール。
+5. アプリの設定から pairing file を読み込む。
+6. **Developer Disk Image (DDI)** を設定画面からダウンロードしてマウント。
 
 受信側の手順:
 

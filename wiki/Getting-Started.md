@@ -55,14 +55,14 @@ swift test
 
 ## 6. iPad（Receiver）のセットアップ
 
-位置注入を使うには次の 4 つが必要です。
+初回セットアップは **Windows / macOS / Linux のコンピュータ + iloader** で SideStore を入れ、pairing file を注入する流れです（Mac は不要）。
 
-1. **Developer Mode**: 設定 > プライバシーとセキュリティ > デベロッパモード を ON。
+1. **iloader** で SideStore をインストール（[iloader.app](https://iloader.app)）→ 開発元を信頼 → **Developer Mode** を ON。
 2. **LocalDevVPN**: App Store からインストールし、接続。iPad 自身が `10.7.0.1` として公開されます。
-3. **pairing file**: `.mobiledevicepairing` を用意し、アプリの「設定」→「pairing file を読み込む」。
+3. **pairing file**: iloader の「Manage Pairing File」で Place → エクスポートし、iPad の Files に置いてアプリの「設定」→「pairing file を読み込む」。
 4. **DDI**: 「設定」→「DDI をダウンロード」→ 自動でマウント。
 
-> LocalDevVPN が使えない場合（他の VPN と競合する、Tailscale を常時使いたい等）は、Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [Networking（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/wiki/Networking) を参照してください。
+> 無料の Apple ID では SideStore / アプリは 7 日で期限切れになります。SideStore の「7 DAYS」をタップして更新してください。
 
 詳しい手順: [docs/receiver-setup.md](https://github.com/haruki0420/p2pgps-ios/blob/main/docs/receiver-setup.md)
 

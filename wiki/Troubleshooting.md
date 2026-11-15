@@ -31,6 +31,14 @@
 ## pairing file が無効 / 読み込めない
 
 - pairing file はこの iPad 自身のものです。別の端末のものは使えません。
+- **iloader** で「Delete Stored Pairing」→ デバイスで Trust →「Manage Pairing File」→「Place」→ 再度エクスポート → 本アプリで再インポート、の順で復旧してください。
+- pairing file は Apple 側の都合でランダムに期限切れになることがあります。
+
+## SideStore / アプリが起動しない・期限切れ
+
+- 無料の Apple ID では SideStore とインストールしたアプリは **7 日で期限切れ**になります。SideStore の「My Apps」で「7 DAYS」をタップして更新してください。
+- 「信頼されていない開発元」と表示される場合は、設定 > 一般 > VPN とデバイス管理 で開発元を信頼します。
+- 改善しない場合は iloader から SideStore / アプリを再インストールしてください。
 - 期限切れの可能性があるため、取得し直してください。
 - 設定でいったん削除してから再インポートすると確実です。
 - pairing file は秘密情報です。共有・コミットしないでください。
