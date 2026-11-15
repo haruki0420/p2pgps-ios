@@ -573,17 +573,17 @@ extension ReceiverCentral: CBPeripheralDelegate {
 
         // Spec §5: after connecting, read Status and write START (idempotent).
         if locationCharacteristic == nil {
-            reportError("この iPad は必要な Bluetooth 機能に対応していません。")
+            reportError("送信側のアプリが必要な機能に対応していません。送信側のアプリを最新にして、もう一度接続してください。")
         }
         if statusCharacteristic == nil {
-            reportError("この iPad は必要な Bluetooth 機能に対応していません。")
+            reportError("送信側のアプリが必要な機能に対応していません。送信側のアプリを最新にして、もう一度接続してください。")
         }
         if controlCharacteristic != nil {
             let stored = UserDefaults.standard.integer(forKey: SettingsKey.senderIntervalMilliseconds)
             let interval = stored > 0 ? UInt16(clamping: stored) : ControlCommand.defaultIntervalMilliseconds
             send(.start(intervalMilliseconds: interval))
         } else {
-            reportError("この iPad は必要な Bluetooth 機能に対応していません。")
+            reportError("送信側のアプリが必要な機能に対応していません。送信側のアプリを最新にして、もう一度接続してください。")
         }
     }
 
