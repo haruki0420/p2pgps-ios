@@ -44,13 +44,16 @@
 
 - pairing file はこの iPad 自身のものです。別の端末のものは使えません。
 - **iloader** で「Delete Stored Pairing」→ デバイスで Trust →「Manage Pairing File」→「Place」→ 再度エクスポート → 本アプリで再インポート、の順で復旧してください。
+- それでも直らない場合は、**idevice_pair の Windows x86_64 版（`idevice_pair--windows-x86_64`）** で RPPairing を作り直してください。iOS 27.2 の実機では iloader では直らず、こちらで成功しています。
 - pairing file は Apple 側の都合でランダムに期限切れになることがあります。
 
 ## iOS 27 で ConnectionReset（code 54）になる
 
 iOS 27 では、iloader の pairing file（lockdown + RPPairing の結合ファイル）が RSD ハンドシェイクで拒否されることがあります。
 
-1. [idevice_pair](https://github.com/jkcoxson/idevice_pair/releases) を起動（Windows は iTunes / usbmuxd が必要）
+> **実機での確認（2026-11-15、iOS 27.2 / Windows）**: iloader では `ConnectionReset` が解消せず、**`idevice_pair--windows-x86_64`（Windows x86_64 版）** で成功しました。
+
+1. [idevice_pair](https://github.com/jkcoxson/idevice_pair/releases) を起動（Windows は iTunes / usbmuxd が必要）。Windows は **x86_64 版**のアセットを使用
 2. デバイスを選択 → **Remote pairing** → **Create** → **Validate**
 3. **Save to file…** で保存 → 本アプリの Settings で古い pairing file を削除 → 新しいファイルをインポート
 4. 改善しない場合はアプリを完全に削除 → iPad を再起動 → 再インストール → 新しい pairing file をインポート

@@ -109,7 +109,7 @@ DDI の取得元: [doronz88/DeveloperDiskImage](https://github.com/doronz88/Deve
 | 診断で「ローカルネットワーク」の許可が必要と出る / ポート検出が Fallback になる | 設定 > プライバシーとセキュリティ > ローカルネットワーク で P2P GPS を ON にしてから、アプリを再起動して再試行。 |
 | 診断で pairing file が「lockdown のみ」と出る | iloader でエクスポートし直し（RPPairing を含むファイル）、本アプリで再インポート。 |
 | 診断で TCP が「接続待ち / 失敗」と出る | LocalDevVPN を接続し直す。Wi-Fi を OFF/ON。他の VPN を切断。ローカルネットワークの許可を確認。 |
-| pairing file が無効と言われる | iloader で pairing file を再配置・再エクスポートしてインポートし直す。期限切れの可能性。 |
+| pairing file が無効と言われる | iloader で直らない場合は **idevice_pair の Windows x86_64 版**（リリース名 `idevice_pair--windows-x86_64`）で RPPairing を作り直してインポートしてください。期限切れの可能性もあります。 |
 | iOS 27 で `ConnectionReset`（code 54）になる | 下記「iOS 27 以降で ConnectionReset になる場合」を参照。**idevice_pair** で RPPairing を作り直してください。 |
 | SideStore でアプリが起動しない / 期限切れ | SideStore の「7 DAYS」をタップして更新。改善しなければ iloader から再インストール。 |
 | 「信頼されていない開発元」と表示される | 設定 > 一般 > VPN とデバイス管理 で開発元を信頼。 |
@@ -121,13 +121,16 @@ DDI の取得元: [doronz88/DeveloperDiskImage](https://github.com/doronz88/Deve
 
 iOS 27 では、iloader がエクスポートする pairing file（lockdown + RPPairing の結合ファイル）が RSD ハンドシェイクで拒否されることがあります（`ConnectionReset` / code 54）。StikDebug でも同じ報告があり、**idevice_pair で RPPairing を作り直す**ことで解決しています。
 
+> **実機での確認（2026-11-15、iOS 27.2 / Windows）**: iloader の pairing file では `ConnectionReset` が解消せず、**`idevice_pair--windows-x86_64`（Windows x86_64 版）** で RPPairing を作り直したところ成功しました。Windows では x86_64 版のアセットを使用してください。
+
 1. [idevice_pair](https://github.com/jkcoxson/idevice_pair/releases) を起動します（Windows は iTunes / usbmuxd が必要）。
+   - Windows は **`idevice_pair--windows-x86_64`** のアセットを使います。
    - USB 接続、または iOS 27 以降なら「Pair over Wi-Fi」も使えます。
 2. デバイスを選択 → **Remote pairing** → **Create** → **Validate** で有効性を確認します。
 3. **Save to file…** で `pairingFile.plist` を保存します。
 4. 本アプリの Settings → **pairing file を削除** → **pairing file を読み込む** で新しいファイルをインポートします。
 5. 改善しない場合は、アプリを**完全に削除** → iPad を再起動 → 再インストール → 新しい pairing file をインポートしてください（StikDebug の iOS 27 報告と同じ対処です）。
 
-> iloader の「Delete Stored Pairing」→ Trust → Place → 再エクスポートでも改善する場合があります。まずは idevice_pair を試してください。
+> iloader の「Delete Stored Pairing」→ Trust → Place → 再エクスポートでも改善する場合があります。ただし iOS 27.2 の実機では iloader では直らず、**idevice_pair の Windows x86_64 版**で成功しています。まずは idevice_pair を試してください。
 
 詳しくは [wiki/Troubleshooting.md](../wiki/Troubleshooting.md) を参照してください。
