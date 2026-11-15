@@ -48,13 +48,13 @@ public final class TunnelManager: ObservableObject {
     /// Marks the tunnel as gone (e.g. after the VPN dropped or a failed start)
     /// and drops the cached FFI handles so the next start retries.
     public func markDisconnected() {
-        generation += 1
-        queue.async {
-            JITEnableContext.shared.invalidateTunnel()
-        }
         runOnMain {
+            self.generation += 1
             self.isConnected = false
             self.isStarting = false
+        }
+        queue.async {
+            JITEnableContext.shared.invalidateTunnel()
         }
     }
 
@@ -87,7 +87,6 @@ public final class TunnelManager: ObservableObject {
             return
         }
 
-        guard !isConnected else { return }
         guard !isStarting else { return }
 
         isStarting = true

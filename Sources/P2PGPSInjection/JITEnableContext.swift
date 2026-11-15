@@ -145,6 +145,8 @@ final class JITEnableContext {
     private func createTunnel(hostname: String) throws -> TunnelHandles {
         let pairingFile = try getPairingFile()
         defer { rp_pairing_file_free(pairingFile) }
+        let pairingPath = PairingFileStore.prepareURLOnce().path
+        let originalPairingData = try? Data(contentsOf: URL(fileURLWithPath: pairingPath))
 
         let deviceIP = DeviceConnectionContext.targetIPAddress
         let remotePairingPort = RemotePairingPortResolver.resolve(targetIPAddress: deviceIP)
@@ -189,13 +191,18 @@ final class JITEnableContext {
 
         // `tunnel_create_rppairing` may update the pairing file in place
         // (pair-setup). Persist the handle so the next session does not have to
-        // pair again; a write failure is not fatal for this tunnel.
-        let pairingPath = PairingFileStore.prepareURLOnce().path
-        if let writeError = rp_pairing_file_write(pairingFile, pairingPath) {
-            LogStore.shared.warning(
-                "pairing file の更新を保存できませんでした: \(IdeviceBridge.detail(from: writeError))"
-            )
-            idevice_error_free(writeError)
+        // pair again, but only if the file was not replaced while the tunnel
+        // was being created (the user may have imported a new pairing file).
+        let currentPairingData = try? Data(contentsOf: URL(fileURLWithPath: pairingPath))
+        if currentPairingData == originalPairingData {
+            if let writeError = rp_pairing_file_write(pairingFile, pairingPath) {
+                LogStore.shared.warning(
+                    "pairing file の更新を保存できませんでした: \(IdeviceBridge.detail(from: writeError))"
+                )
+                idevice_error_free(writeError)
+            }
+        } else {
+            LogStore.shared.info("pairing file が作成中に置き換わったため、更新の書き戻しをスキップしました")
         }
 
         return tunnel

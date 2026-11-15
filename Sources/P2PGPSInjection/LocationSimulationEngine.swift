@@ -508,6 +508,14 @@ public final class LocationSimulationEngine: ObservableObject {
                         markTunnelDisconnected()
                     }
                 }
+            } else {
+                // A transient failure can recover on a later tick; reflect the
+                // live session again so the banner/guards do not stay stale.
+                DispatchQueue.main.async {
+                    self.sessionOpen = LocationSimulationSession.isOpen
+                    self.isSimulating = true
+                    self.lastError = nil
+                }
             }
         }
         timer.resume()
