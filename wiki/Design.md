@@ -1,6 +1,6 @@
 # iOS デザイン実装メモ
 
-正本はプロジェクト共通の DESIGN.md（このリポジトリ外で管理、視覚世界「測量標（benchmark）」）。このファイルは SwiftUI 実装への落とし込みと、実装後の自己点検結果を記録します。
+正本はプロジェクト共通の [Design](https://github.com/haruki0420/p2pgps/wiki/Design)（視覚世界「測量標（benchmark）」）。このファイルは SwiftUI 実装への落とし込みと、実装後の自己点検結果を記録します。
 
 ## 1. トークンの実装
 

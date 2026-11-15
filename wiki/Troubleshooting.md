@@ -42,6 +42,6 @@
 
 ## 既知の制約
 
-- BLE 購読・位置注入は Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
+- Bluetooth での位置の受け渡しと、iPad の位置の書き換えは Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
 - iPad の位置変更は Apple の非公開機能に依存するため、OS の更新で動かなくなる可能性があります。
 - Bluetooth は 1 対 1 接続です。
