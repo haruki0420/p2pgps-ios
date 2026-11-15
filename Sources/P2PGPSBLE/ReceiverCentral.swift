@@ -83,6 +83,11 @@ public final class ReceiverCentral: NSObject, ObservableObject {
     @Published public private(set) var isBluetoothAvailable: Bool = false
     @Published public private(set) var isScanning: Bool = false
 
+    /// Notification (CCCD) subscription state, exposed for diagnostics.
+    public var isLocationNotifying: Bool { locationCharacteristic?.isNotifying ?? false }
+    public var isStatusNotifying: Bool { statusCharacteristic?.isNotifying ?? false }
+    public var isExtendedNotifying: Bool { extendedCharacteristic?.isNotifying ?? false }
+
     // MARK: - Configuration
 
     /// Reconnect to the last sender after an unexpected disconnect.

@@ -119,6 +119,12 @@ private struct ReceiverDiagnosticsRows: View {
         Group {
             DiagnosticRow(label: "状態", value: stateText)
             DiagnosticRow(label: "送信元", value: central.state.senderName ?? "—")
+            DiagnosticRow(
+                label: "購読",
+                value: "Location \(central.isLocationNotifying ? "ON" : "OFF") / " +
+                    "Status \(central.isStatusNotifying ? "ON" : "OFF") / " +
+                    "Extended \(central.isExtendedNotifying ? "ON" : "OFF")"
+            )
             DiagnosticRow(label: "電波", value: central.signalQuality.localizedDescription)
             DiagnosticRow(label: "受信パケット数", value: "\(central.packetsReceived)")
             DiagnosticRow(label: "sequence 巻き戻り", value: "\(central.sequenceRewinds)")
