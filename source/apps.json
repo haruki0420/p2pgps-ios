@@ -22,15 +22,6 @@
       "screenshots": [],
       "versions": [
         {
-          "version": "1.0.13",
-          "date": "2026-11-15T15:01:05Z",
-          "localizedDescription": "画面の言葉と案内を分かりやすくしました。",
-          "downloadURL": "https://github.com/haruki0420/p2pgps-ios/releases/download/v1.0.13/p2pgps-ios-v1.0.13-unsigned.ipa",
-          "size": 3362209,
-          "minOSVersion": "17.0",
-          "sha256": "da8105d6b79e5ab9df1664affd28cd816d450dfe6a771ed3fe8b3082d8b7061c"
-        },
-        {
           "version": "1.0.12",
           "date": "2026-11-15T10:05:05Z",
           "localizedDescription": "送信設定に「高頻度更新（500 ms + Extended）」プリセットを追加しました。",
