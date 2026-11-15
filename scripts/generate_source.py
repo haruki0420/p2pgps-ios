@@ -158,20 +158,16 @@ def main() -> int:
             "category": "utilities",
             "screenshots": [],
             "versions": [],
-            "appPermissions": [
-                {
-                    "type": "bluetooth",
-                    "usageDescription": "近くの iPhone / iPad と位置情報をやり取りするために Bluetooth を使用します。",
+            "appPermissions": {
+                "entitlements": [],
+                "privacy": {
+                    "NSBluetoothAlwaysUsageDescription": "近くの iPhone / iPad と位置情報をやり取りするために Bluetooth を使用します。",
+                    "NSBluetoothPeripheralUsageDescription": "近くの iPad に位置情報を送信するために Bluetooth を使用します。",
+                    "NSLocationWhenInUseUsageDescription": "現在地を取得して iPad に送信するために位置情報を使用します。",
+                    "NSLocationAlwaysAndWhenInUseUsageDescription": "現在地を取得して iPad に送信し、画面を消している間も位置情報の反映を維持するために位置情報を使用します。",
+                    "NSLocalNetworkUsageDescription": "Remote Pairing サービスを Bonjour で検出し、LocalDevVPN 経由でこのデバイス自身の位置情報サービスに接続するためにローカルネットワークを使用します。",
                 },
-                {
-                    "type": "location",
-                    "usageDescription": "現在地を取得して iPad に送信し、画面を消している間も位置情報の反映を維持するために位置情報を使用します。",
-                },
-                {
-                    "type": "localNetwork",
-                    "usageDescription": "Remote Pairing サービスを Bonjour で検出し、LocalDevVPN 経由でこのデバイス自身の位置情報サービスに接続するためにローカルネットワークを使用します。",
-                },
-            ],
+            },
         }
         source["apps"].append(app)
 

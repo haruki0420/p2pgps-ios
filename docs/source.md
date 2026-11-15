@@ -10,16 +10,39 @@ P2P GPS を **SideStore / AltStore のソース**に追加すると、新しい�
 - `scripts/generate_source.py` が GitHub Release から自動生成します。
 - `.github/workflows/update-source.yml` が **Release IPA ワークフローの成功後**に `source/apps.json` を更新して `main` にコミットします。
 
+## SideStore への追加手順
+
+SideStore は AltStore ソースと完全互換です（[SideStore Docs: App Sources](https://docs.sidestore.io/docs/advanced/app-sources)）。
+
+### 方法 1: ワンクリックリンク
+
+SideStore がインストールされた iPad で次のリンクを開きます。
+
+```
+sidestore://source?url=https%3A%2F%2Fraw.githubusercontent.com%2Fharuki0420%2Fp2pgps-ios%2Fmain%2Fsource%2Fapps.json
+```
+
+### 方法 2: 手動で追加
+
+1. SideStore → **Sources** → **+**
+2. 次を入力:
+
+   ```
+   https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
+   ```
+
+3. ソースに P2P GPS が表示され、リリースごとに新バージョンが出ます。
+
+### 注意点
+
+- IPA は**未署名**のまま配布しています（SideStore が Apple ID で署名します）。
+- `marketplaceID` / `build` フィールドは入れていません。これらがあると SideStore は「公証済みソース」と誤認して追加を拒否します。
+- ソースの `appPermissions` は AltStore 形式（`entitlements` / `privacy` の dict）で記述しています。
+
 ## 公開 URL（設定済み）
 
-`p2pgps-ios` リポジトリは public です。SideStore → Sources → **+** で次を追加してください。
+`p2pgps-ios` リポジトリは public です。上記 URL をそのまま使えます。
 
-```
-https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
-```
-
-- ソースに P2P GPS が表示され、リリースごとに新バージョンが出ます。
-- IPA も GitHub Release からそのまま取得できます（未署名。SideStore が Apple ID で署名します）。
 - AGPL-3.0 のソース提供義務も public リポジトリで満たしています。
 
 ### 代替: 公開用リポジトリ / GitHub Pages

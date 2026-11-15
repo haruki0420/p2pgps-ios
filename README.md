@@ -45,6 +45,12 @@ iPhone（または Android）で取得した GPS 位置を **BLE GATT** で iPad
 https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
 ```
 
+ワンクリックで追加する場合（SideStore がインストールされた端末で開く）:
+
+```
+sidestore://source?url=https%3A%2F%2Fraw.githubusercontent.com%2Fharuki0420%2Fp2pgps-ios%2Fmain%2Fsource%2Fapps.json
+```
+
 - `.github/workflows/update-source.yml` が **Release IPA の成功後**に `source/apps.json` を自動更新します。
 - ソースの更新は自動ですが、アプリのインストール（更新）は SideStore 上でユーザーがタップする必要があります（iOS サイドロードの制約）。
 - 公開 URL の用意方法（public 化 / 公開用リポジトリ / GitHub Pages）と AGPL の注意は [docs/source.md](docs/source.md) を参照してください。
