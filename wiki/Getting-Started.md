@@ -15,7 +15,7 @@ cd p2pgps-ios
 
 ## 2. ベンダーライブラリを取得
 
-`libidevice_ffi.a`（約 92.6 MB）はリポジトリに含まれません。SHA-256 を検証しながら取得します。
+`libidevice_ffi.a`（約 54.4 MB）はリポジトリに含まれません。SHA-256 を検証しながら取得します。
 
 ```bash
 bash scripts/fetch-vendor.sh          # macOS / Linux / WSL
@@ -29,7 +29,7 @@ xtool dev build     # ビルド
 xtool dev run       # 実機へインストール・起動
 ```
 
-xtool のセットアップ（Swift / iOS SDK / Apple ID）は [docs/setup-linux.md](https://github.com/haruki0420/p2pgps-ios/blob/main/docs/setup-linux.md) を参照してください。
+xtool のセットアップ（Swift / iOS SDK / Apple ID）は [wiki/Build.md](https://github.com/haruki0420/p2pgps-ios/blob/main/wiki/Build.md) を参照してください。
 
 ### macOS + Xcode の場合
 
@@ -64,7 +64,7 @@ swift test
 
 > 無料の Apple ID では SideStore / アプリは 7 日で期限切れになります。SideStore の「7 DAYS」をタップして更新してください。
 
-詳しい手順: [docs/receiver-setup.md](https://github.com/haruki0420/p2pgps-ios/blob/main/docs/receiver-setup.md)
+詳しい手順: [wiki/Setup-iPad.md](https://github.com/haruki0420/p2pgps-ios/blob/main/wiki/Setup-iPad.md)
 
 ## 7. 位置を反映する
 

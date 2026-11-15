@@ -65,7 +65,7 @@ struct SenderView: View {
                             controller.toggleSending()
                         }
 
-                        Text("送信を開始すると BLE でアドバタイズし、受信側が接続すると位置を通知します。画面を消しても送信を続けるため、位置情報の「常に許可」を推奨します。")
+                        Text("送信を開始すると Bluetooth で見つけられる状態になり、受信側が接続すると位置を送ります。画面を消しても送信を続けるため、位置情報の「常に許可」を推奨します。")
                             .font(P2PFont.caption)
                             .foregroundStyle(P2PColor.inkSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -157,7 +157,7 @@ struct SenderView: View {
                 .font(P2PFont.metric)
                 .foregroundStyle(P2PColor.inkSecondary)
             if controller.extendedEnabled {
-                Text("Extended Location を通知します")
+                Text("速度と向きも送ります")
                     .font(P2PFont.caption)
                     .foregroundStyle(P2PColor.inkSecondary)
             }
@@ -169,19 +169,19 @@ struct SenderView: View {
     private var bleSection: some View {
         HStack(alignment: .top, spacing: 12) {
             bleItem(
-                title: "アドバタイズ",
-                value: controller.isAdvertising ? "中" : "停止",
+                title: "見つけられる状態",
+                value: controller.isAdvertising ? "公開中" : "停止",
                 isActive: controller.isAdvertising,
                 systemImage: "dot.radiowaves.left.and.right"
             )
             bleItem(
-                title: "購読",
+                title: "受信中の iPad",
                 value: "\(controller.subscriberCount) 台",
                 isActive: controller.subscriberCount > 0,
                 systemImage: "link"
             )
             bleItem(
-                title: "送信",
+                title: "位置の送信",
                 value: controller.isStreaming ? "中" : "停止",
                 isActive: controller.isStreaming,
                 systemImage: "arrow.up.circle"

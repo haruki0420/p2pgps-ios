@@ -4,7 +4,7 @@
 > 視覚世界「測量標（benchmark）」、カラートークン、タイポグラフィ、レイアウト、
 > モーション、コピー、anti-slop ルールは共通版が正。このファイルは iOS
 > （SwiftUI）での実装対応だけを記録する。共通版と競合する記述はしない。
-> 実装後の自己点検結果は [`docs/design.md`](docs/design.md) に詳述。
+> 実装後の自己点検結果は [`wiki/Design.md`](wiki/Design.md) に詳述。
 
 ## 実装方針
 
@@ -47,4 +47,4 @@
 - コンパイル: **CI（macOS ランナー）で検証済み**（`swift test` / iOS クロスビルド /
   XcodeGen + xcodebuild リンクのみ。実機の BLE・注入・UI は未検証）。
 - レンダリング: **未検証**（Simulator / 実機なし）。Dynamic Type・Dark Mode の
-  実画面確認は未実施で、既知の制約として README に明記する。
+  全画面の実画面確認は未実施で、既知の制約として README に明記する。

@@ -6,7 +6,7 @@
 //  Copyright (C) 2026 haruki0420 and contributors
 //  SPDX-License-Identifier: AGPL-3.0-or-later
 //
-//  Spec §3 (p2pgps/docs/protocol-spec.md). The 20-byte size is deliberate: it
+//  Spec §3 (p2pgps/https://github.com/haruki0420/p2pgps-protocol/blob/main/spec/protocol-v1.md). The 20-byte size is deliberate: it
 //  fits in a single ATT notification at the BLE 4.0 default MTU of 23 bytes, so
 //  no fragmentation or MTU negotiation is required.
 //

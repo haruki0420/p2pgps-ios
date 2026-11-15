@@ -1,7 +1,7 @@
 # xtool configuration — https://github.com/xtool-org/xtool
 #
 # `xtool dev build` reads this file, cross-builds the SwiftPM product below for
-# iOS and wraps it into P2PGPSApp.app. See docs/setup-linux.md for the full
+# iOS and wraps it into P2PGPSApp.app. See wiki/Build.md for the full
 # toolchain setup (Linux / WSL) and README.md for the short version.
 version: 1
 bundleID: jp.haruki0420.p2pgps

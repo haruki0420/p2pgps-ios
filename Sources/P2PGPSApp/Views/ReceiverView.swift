@@ -234,7 +234,7 @@ struct ReceiverView: View {
             P2PEmptyState(
                 systemImage: "checkmark.circle",
                 title: "接続済み・位置データ待ち",
-                message: "送信側の START と位置通知を待っています。送信側アプリのログを確認してください。"
+                message: "接続できました。送信側が現在地を測位できると、ここに位置が表示されます。"
             )
 
             if let error = controller.errorMessage {
@@ -244,7 +244,7 @@ struct ReceiverView: View {
             P2PEmptyState(
                 systemImage: "antenna.radiowaves.left.and.right",
                 title: central.isScanning ? "送信元を探しています" : "まだ受信していません",
-                message: "iPhone 側で「送信を開始」を押すと、ここに送信元が表示されます。"
+                message: "iPhone / Android 側で「送信を開始」を押すと、ここに送信元が表示されます。"
             )
 
             if !central.discoveredSenders.isEmpty {

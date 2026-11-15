@@ -6,7 +6,7 @@
 //  Copyright (C) 2026 haruki0420 and contributors
 //  SPDX-License-Identifier: AGPL-3.0-or-later
 //
-//  The normative source is `p2pgps/docs/protocol-spec.md` §10. The expected
+//  The normative source is `p2pgps/https://github.com/haruki0420/p2pgps-protocol/blob/main/spec/protocol-v1.md` §10. The expected
 //  byte arrays below are derived from the spec's decimal field values
 //  (latitude × 10^7 etc.); spec §3.2 was corrected on 2026-11-15 to match them.
 //

@@ -6,7 +6,7 @@ name: Update SideStore source
 #
 # NOTE: SideStore can only read the source over a *public* URL. This repository
 # is public, so `source/apps.json` and the IPA assets are served directly from
-# GitHub — see docs/source.md.
+# GitHub — see wiki/Source.md.
 
 on:
   workflow_run:

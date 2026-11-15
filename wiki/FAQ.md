@@ -27,7 +27,7 @@ v1 は **1 対 1** です。iPad は同時に 1 台の送信側と接続しま�
 3. pairing file（この iPad 自身のもの）
 4. Developer Disk Image（アプリがダウンロード）
 
-詳細は [docs/receiver-setup.md](https://github.com/haruki0420/p2pgps-ios/blob/main/docs/receiver-setup.md)。
+詳細は [wiki/Setup-iPad.md](https://github.com/haruki0420/p2pgps-ios/blob/main/wiki/Setup-iPad.md)。
 
 ## 注入は既定で OFF ですか？
 
@@ -58,7 +58,7 @@ v2 でアプリ層の HMAC / ペアリングコードを追加する余地を残
 
 ## 実機でしか動かないのですか？
 
-この開発環境には Xcode / Swift / 実機がなく、**実機・シミュレータでの動作検証は未実施**です。CI はコンパイルとリンクのみを検証します。BLE と位置注入は実機での確認が必要です。
+BLE 購読・位置注入・シミュレート位置の移動は Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
 
 ## ライセンスは？
 
@@ -76,4 +76,4 @@ SideStore / AltStore の**ソース**に対応しています。このリポジ�
 https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
 ```
 
-ソースの更新は CI（Release IPA の成功後）で自動化されています。アプリの更新インストール自体は SideStore 上でタップが必要です。詳細は [docs/source.md](https://github.com/haruki0420/p2pgps-ios/blob/main/docs/source.md) を参照してください。
+ソースの更新は CI（Release IPA の成功後）で自動化されています。アプリの更新インストール自体は SideStore 上でタップが必要です。詳細は [wiki/Source.md](https://github.com/haruki0420/p2pgps-ios/blob/main/wiki/Source.md) を参照してください。

@@ -18,7 +18,7 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
 
 ## iOS 固有の制約
 
-- 実機・シミュレータ・Xcode が開発環境に無い。**レンダリング検証は未実施**で、
+- 全画面のレンダリング確認は未実施で、
   CI はコンパイルとリンクのみを保証する。実機確認は README の既知の制約に記載。
 - 位置注入は Apple 非公開 API 相当。TLocation と同一の FFI に固定し、壊れた場合は
   `tlocation://` URL スキームへ委譲するフォールバックを設定で選べる。
@@ -40,11 +40,11 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
 | Diagnostics | `Sources/P2PGPSApp/Views/DiagnosticsView.swift` | Layout > Home / Settings / Diagnostics |
 
 トークンの iOS 実装（`Color` extension、フォント、コンポーネント）は
-[`docs/design.md`](docs/design.md) に記録する。
+[`wiki/Design.md`](wiki/Design.md) に記録する。
 
 ## Evidence on Hand
 
 - 仕様: プロトコル仕様 v1（`p2pgps-protocol`、v1 凍結）
-- 全体アーキテクチャ: `docs/architecture.md`
+- 全体アーキテクチャ: `wiki/Architecture.md`
 - 参照実装: https://github.com/truongkma/t-location（AGPL-3.0, 上流コミット固定）
 - 実機スクリーンショット・利用ログ: 無し（設計は推定）

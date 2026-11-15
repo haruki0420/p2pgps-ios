@@ -12,7 +12,7 @@ P2P GPS を **SideStore / AltStore のソース**に追加すると、新しい�
 
 ## SideStore への追加手順
 
-SideStore は AltStore ソースと完全互換です（[SideStore Docs: App Sources](https://docs.sidestore.io/docs/advanced/app-sources)）。
+SideStore は AltStore ソースと完全互換です（[SideStore Docs: App Sources](https://docs.sidestore.io/wiki/advanced/app-sources)）。
 
 ### 方法 1: ワンクリックリンク
 
@@ -47,7 +47,7 @@ sidestore://source?url=https%3A%2F%2Fraw.githubusercontent.com%2Fharuki0420%2Fp2
 
 ### 代替: 公開用リポジトリ / GitHub Pages
 
-ソースコードを private に戻したい場合は、公開専用の `p2pgps-source` リポジトリを作り、`source/apps.json` と IPA をそこへミラーする方法もあります（CI から push する場合は `SOURCE_REPO_TOKEN` が必要）。GitHub Pages に `apps.json` を置く方法でも構いません。
+このリポジトリは public のため、`source/apps.json` と IPA はそのまま SideStore から参照できます。
 
 ## 更新の自動化の範囲
 

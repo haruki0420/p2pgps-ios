@@ -85,7 +85,7 @@ struct SettingsView: View {
             Toggle("自動再接続", isOn: $settings.autoReconnect)
 
             HStack {
-                Text("ターゲット IP")
+                Text("接続先（上級者向け）")
                 Spacer()
                 TextField(
                     DeviceConnectionContext.defaultTargetIPAddress,
@@ -101,11 +101,11 @@ struct SettingsView: View {
             Button {
                 TunnelManager.shared.start()
             } label: {
-                Label("トンネルを再試行", systemImage: "arrow.clockwise")
+                Label("再接続", systemImage: "arrow.clockwise")
             }
 
             HStack {
-                Text("トンネル")
+                Text("iPad 内部への接続")
                 Spacer()
                 Text(tunnel.isConnected ? "接続済み" : (tunnel.isStarting ? "接続中…" : "未接続"))
                     .font(P2PFont.metric)
@@ -120,14 +120,14 @@ struct SettingsView: View {
         } header: {
             Text("接続")
         } footer: {
-            Text("LocalDevVPN がこのデバイスを 10.7.0.1 として公開します。トンネルは DDI のマウントに使います。")
+            Text("通常は変更する必要はありません。うまく接続できないときだけ「再接続」を押してください。")
         }
     }
 
     private var injectionSection: some View {
         Section {
             HStack {
-                Text("pairing file")
+                Text("位置情報ファイル（pairing file）")
                 Spacer()
                 Text(pairingPresent ? "読み込み済み" : "未設定")
                     .font(P2PFont.metric)
@@ -221,21 +221,21 @@ struct SettingsView: View {
                 Label("LocalDevVPN を開く", systemImage: "network")
             }
 
-            Toggle("TLocation の URL スキームに委譲", isOn: $settings.useTLocationURLSchemeFallback)
+            Toggle("TLocation に任せる（上級者向け）", isOn: $settings.useTLocationURLSchemeFallback)
         } header: {
-            Text("位置注入")
+            Text("位置の書き換え")
         } footer: {
-            Text("pairing file と DDI は位置注入に必須です。DDI は doronz88/DeveloperDiskImage の固定コミット（\(DeveloperDiskImageService.upstreamCommit.prefix(7))…）から取得し、SHA-256 を検証します。iloader の「配置」で Documents に置かれた pairing file は、アプリ起動時・設定を開いたときに自動で読み込みます。URL スキーム委譲を有効にすると、別途インストールした TLocation に注入を任せます。")
+            Text("この iPad の位置を書き換えるには、①位置情報ファイル、②Apple の開発用イメージ（DDI）、③LocalDevVPN の 3 つが必要です。下のボタンから順に準備してください。")
         }
     }
 
     private var receiverSection: some View {
         Section {
-            Toggle("バックグラウンド維持（受信側）", isOn: $settings.keepAliveLocationUpdates)
+            Toggle("画面を消しても動かす（受信側）", isOn: $settings.keepAliveLocationUpdates)
         } header: {
             Text("受信（iPad）")
         } footer: {
-            Text("受信側で位置情報の反映中に、低精度の位置情報セッションでアプリの停止を防ぎます（位置情報の「常に許可」が必要です）。送信側は送信中のみ位置情報セッションで維持します。")
+            Text("iPad の画面を消しても位置の反映を続けるための設定です。位置情報の「常に許可」が必要です。")
         }
     }
 
@@ -247,18 +247,18 @@ struct SettingsView: View {
                 }
             }
 
-            Toggle("Extended Location を通知", isOn: $settings.extendedLocationEnabled)
+            Toggle("速度と向きも送る", isOn: $settings.extendedLocationEnabled)
 
             Button {
                 settings.senderIntervalMilliseconds = 500
                 settings.extendedLocationEnabled = true
             } label: {
-                Label("高頻度更新（500 ms + Extended）", systemImage: "bolt")
+                Label("高頻度更新（0.5 秒ごと）", systemImage: "bolt")
             }
         } header: {
             Text("送信（iPhone）")
         } footer: {
-            Text("送信間隔は受信側の START コマンドでも変更されます。")
+            Text("送信間隔は iPad 側からも変更できます。")
         }
     }
 
@@ -305,7 +305,7 @@ struct SettingsView: View {
             Text("位置注入エンジンは StikDebug / TLocation（AGPL-3.0）由来です。詳細はリポジトリの NOTICE を参照してください。")
                 .font(P2PFont.caption)
                 .foregroundStyle(P2PColor.inkSecondary)
-            Text("既知の制約: iPad 側は Developer Mode / LocalDevVPN / pairing file / DDI が必要です。実機での動作検証は未実施です。")
+            Text("iPad 側は Developer Mode / LocalDevVPN / pairing file / DDI が必要です。")
                 .font(P2PFont.caption)
                 .foregroundStyle(P2PColor.inkSecondary)
         } header: {

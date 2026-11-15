@@ -53,6 +53,14 @@ def release_info(repo: str, tag: str) -> dict:
     return json.loads(raw)
 
 
+def user_facing_description(body: str, version: str) -> str:
+    """Returns a short description without internal process words."""
+    text = first_paragraph(body)
+    if any(word in text for word in ("サブエージェント", "最終レビュー", "低リスク", "独立レビュー")):
+        return f"{version} の不具合修正と改善。"
+    return text
+
+
 def sha256_for_asset(repo: str, tag: str, ipa_name: str) -> str | None:
     """Returns the SHA-256 recorded in the release's `.sha256` asset."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -174,7 +182,7 @@ def main() -> int:
     entry = {
         "version": version,
         "date": date,
-        "localizedDescription": first_paragraph(info.get("body", "")),
+        "localizedDescription": user_facing_description(info.get("body", ""), version),
         "downloadURL": ipa["url"],
         "size": ipa["size"],
         "minOSVersion": "17.0",

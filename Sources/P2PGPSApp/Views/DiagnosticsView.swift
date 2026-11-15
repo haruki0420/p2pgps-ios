@@ -30,33 +30,33 @@ struct DiagnosticsView: View {
         NavigationStack {
             List {
                 if let central {
-                    Section("BLE 受信") {
+                    Section("受信の状態") {
                         ReceiverDiagnosticsRows(central: central)
                     }
                 }
                 if let senderPeripheral {
-                    Section("BLE 送信") {
+                    Section("送信の状態") {
                         SenderDiagnosticsRows(peripheral: senderPeripheral)
                     }
                 }
                 if let engine {
-                    Section("位置注入") {
+                    Section("位置の書き換え") {
                         InjectionDiagnosticsRows(engine: engine)
                     }
                 }
-                Section("トンネル / DDI") {
+                Section("iPad 内部への接続") {
                     TunnelDiagnosticsRows()
                 }
-                Section("接続診断") {
+                Section("つながらないときの確認") {
                     ConnectionDiagnosticsRows()
                 }
-                Section("ログ") {
+                Section("動作記録") {
                     LogDiagnosticsRows()
                 }
             }
             .scrollContentBackground(.hidden)
             .background(P2PColor.paper.ignoresSafeArea())
-            .navigationTitle("診断")
+            .navigationTitle("困ったとき")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

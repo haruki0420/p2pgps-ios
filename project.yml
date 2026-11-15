@@ -27,7 +27,7 @@ settings:
   base:
     # The ported TLocation engine is Swift 5 source. The SwiftPM package builds
     # P2PGPSProtocol / P2PGPSCore in Swift 6 language mode; this Xcode build
-    # uses Swift 5 mode for the whole single module (see docs/architecture.md).
+    # uses Swift 5 mode for the whole single module (see wiki/Architecture.md).
     SWIFT_VERSION: "5.0"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     ENABLE_USER_SCRIPT_SANDBOXING: NO

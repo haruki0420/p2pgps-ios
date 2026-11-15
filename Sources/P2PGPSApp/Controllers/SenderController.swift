@@ -109,6 +109,14 @@ final class SenderController: ObservableObject {
             }
             .store(in: &cancellables)
 
+        peripheral.$lastError
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
+                self?.errorMessage = message
+            }
+            .store(in: &cancellables)
+
         peripheral.$isAdvertising
             .receive(on: DispatchQueue.main)
             .sink { [weak self] value in

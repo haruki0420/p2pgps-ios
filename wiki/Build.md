@@ -61,7 +61,7 @@ xtool setup
 git clone https://github.com/haruki0420/p2pgps-ios.git
 cd p2pgps-ios
 
-# ベンダーの静的ライブラリを取得（約 92.6 MB、SHA-256 検証つき）
+# ベンダーの静的ライブラリを取得（約 54.4 MB、SHA-256 検証つき）
 bash scripts/fetch-vendor.sh
 
 # ビルド

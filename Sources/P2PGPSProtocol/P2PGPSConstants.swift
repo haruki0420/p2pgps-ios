@@ -7,7 +7,7 @@
 //  SPDX-License-Identifier: AGPL-3.0-or-later
 //
 //  The normative specification is `p2pgps-protocol/spec/protocol-v1.md`
-//  (mirrored at `p2pgps/docs/protocol-spec.md`). Do not change any value here
+//  (mirrored at `p2pgps/https://github.com/haruki0420/p2pgps-protocol/blob/main/spec/protocol-v1.md`). Do not change any value here
 //  without changing the specification for all three repositories at once.
 //
 

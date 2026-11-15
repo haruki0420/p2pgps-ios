@@ -29,7 +29,7 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("iPhone の位置を BLE で iPad に届け、iPad の位置として反映します。")
+                Text("iPhone の位置を Bluetooth で iPad に届け、iPad の位置として反映します。")
                     .font(P2PFont.label)
                     .foregroundStyle(P2PColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -69,7 +69,7 @@ struct HomeView: View {
                     Button {
                         isShowingDiagnostics = true
                     } label: {
-                        Label("診断", systemImage: "waveform.path.ecg")
+                        Label("困ったとき", systemImage: "waveform.path.ecg")
                             .font(P2PFont.label)
                             .foregroundStyle(P2PColor.ink)
                             .frame(minHeight: P2PSpacing.minimumTapTarget)

@@ -45,6 +45,8 @@ iloader で SideStore をインストール
 
 ## 2. pairing file を用意する（iloader から注入 / エクスポート）
 
+> **iOS 27 でうまくいかない場合**: 実機（iOS 27.2 / Windows）では、iloader の pairing file では接続できず、**`idevice_pair--windows-x86_64`（Windows x86_64 版）** で作り直すと成功しました。下の「iOS 27 の pairing file」も参照してください。
+
 iloader は SideStore 用の **RPPairing / lockdown pairing file** を自動で配置します。本アプリでも同じ pairing file を使うため、**iloader からエクスポート**して iPad の Files に置きます。
 
 1. iloader でデバイスを選択します。
@@ -82,7 +84,7 @@ iloader は SideStore 用の **RPPairing / lockdown pairing file** を自動で�
 3. **Wi-Fi に接続している必要があります**（RSD / lockdownd は Wi-Fi 関連時のみ開放されます）。
 4. Remote Pairing のポートは固定値ではなく、Bonjour で自動検出します（検出できない場合は 49152 にフォールバック）。診断画面の「Remote Pairing ポート」で検出結果を確認できます。
 
-> LocalDevVPN が使えない場合（他の VPN と競合する、Tailscale を常時使いたい等）は、Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [ネットワーク構成（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/blob/main/docs/networking.md) を参照してください。
+> LocalDevVPN が使えない場合（他の VPN と競合する、Tailscale を常時使いたい等）は、Tailscale + リフレクターなどの代替手段があります。仕組みと手順は [ネットワーク構成（LocalDevVPN の仕組みと代替手段）](https://github.com/haruki0420/p2pgps/blob/main/wiki/networking.md) を参照してください。
 
 ## 6. DDI をダウンロードしてマウント
 
