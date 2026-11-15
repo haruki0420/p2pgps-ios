@@ -276,13 +276,19 @@ struct SettingsView: View {
         }
     }
 
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+        return "\(version) (\(build))"
+    }
+
     @ViewBuilder
     private var aboutSection: some View {
         Section {
             HStack {
                 Text("バージョン")
                 Spacer()
-                Text("1.0.0").font(P2PFont.metric)
+                Text(appVersion).font(P2PFont.metric)
             }
             HStack {
                 Text("ライセンス")
