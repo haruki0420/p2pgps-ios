@@ -22,6 +22,15 @@
       "screenshots": [],
       "versions": [
         {
+          "version": "1.0.6",
+          "date": "2026-11-15T07:50:22Z",
+          "localizedDescription": "BLE 接続の切り分け用に診断を強化したリリースです。",
+          "downloadURL": "https://github.com/haruki0420/p2pgps-ios/releases/download/v1.0.6/p2pgps-ios-v1.0.6-unsigned.ipa",
+          "size": 3347876,
+          "minOSVersion": "17.0",
+          "sha256": "1d0e6753265be35503d97303280258ca94977e43aebc459b9f9829625c74cf03"
+        },
+        {
           "version": "1.0.5",
           "date": "2026-11-15T06:43:23Z",
           "localizedDescription": "バージョン表記と診断まわりの修正リリースです。",
@@ -53,6 +62,14 @@
     }
   ],
   "news": [
+    {
+      "title": "v1.0.6: p2pgps-ios v1.0.6",
+      "identifier": "v1.0.6",
+      "caption": "BLE 接続の切り分け用に診断を強化したリリースです。",
+      "date": "2026-11-15T07:50:22Z",
+      "tintColor": "#2F6B4F",
+      "url": "https://github.com/haruki0420/p2pgps-ios/releases/tag/v1.0.6"
+    },
     {
       "title": "v1.0.5: p2pgps-ios v1.0.5",
       "identifier": "v1.0.5",
