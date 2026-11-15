@@ -97,6 +97,19 @@ final class ReceiverController: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // An unexpected disconnect must clear the device-side simulation
+        // session; otherwise the engine keeps resending the last coordinate
+        // every 5 s while the UI still claims injection is active. Keep
+        // `wantsInjection` so a reconnect resumes automatically.
+        central.$state
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self, !state.isConnected, self.isInjecting else { return }
+                self.log.info("送信元が切断されたため注入セッションを停止しました")
+                self.stopInjectionSession()
+            }
+            .store(in: &cancellables)
+
         engine.$lastError
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)

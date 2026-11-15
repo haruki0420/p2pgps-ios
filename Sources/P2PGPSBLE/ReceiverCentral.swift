@@ -337,6 +337,15 @@ public final class ReceiverCentral: NSObject, ObservableObject {
         sequenceTracker.reset()
         signalQuality = .none
         stopRSSIPolling()
+
+        // Do not leave stale coordinates / "last received" data on screen (or
+        // available to the injection controller) after a disconnect.
+        latestFix = nil
+        latestPacket = nil
+        latestExtended = nil
+        senderStatus = nil
+        lastPacketHex = ""
+        lastReceivedAt = nil
     }
 
     private func handleLocationValue(_ data: Data) {
