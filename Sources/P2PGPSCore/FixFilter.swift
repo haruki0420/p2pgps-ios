@@ -97,6 +97,15 @@ public struct FixFilter: Sendable {
             return reject(.poorAccuracy(accuracyMeters: fix.horizontalAccuracyMeters))
         }
 
+        // A simulated fix may legitimately jump anywhere: the user can move the
+        // debug coordinate to a different city, which would otherwise be
+        // rejected as a teleport forever (the anchor never advances). Accept it
+        // as-is, without smoothing, so the injected position follows the
+        // simulated coordinate immediately.
+        if fix.isSimulated {
+            return accept(fix)
+        }
+
         guard let previous = lastAccepted else {
             return accept(fix)
         }

@@ -18,7 +18,8 @@ final class FixFilterTests: XCTestCase {
         longitude: Double,
         accuracy: Double = 5,
         timestamp: Date = Date(),
-        speed: Double? = nil
+        speed: Double? = nil,
+        isSimulated: Bool = false
     ) -> GPSFix {
         GPSFix(
             latitude: latitude,
@@ -26,7 +27,8 @@ final class FixFilterTests: XCTestCase {
             horizontalAccuracyMeters: accuracy,
             speedMetersPerSecond: speed,
             timestamp: timestamp,
-            receivedAt: timestamp
+            receivedAt: timestamp,
+            isSimulated: isSimulated
         )
     }
 
@@ -78,8 +80,27 @@ final class FixFilterTests: XCTestCase {
         }
     }
 
-    func testStaleFixIsAcceptedButFlagged() {
+    func testSimulatedTeleportIsAcceptedWithoutSmoothing() {
         var filter = FixFilter()
+        let now = Date()
+        _ = filter.process(makeFix(latitude: 35.0, longitude: 139.0, timestamp: now))
+        // Debug simulate can move to another city; it must not be rejected as
+        // an implausible jump, and must not be smoothed towards the old anchor.
+        let jump = makeFix(
+            latitude: 51.5,
+            longitude: -0.12,
+            timestamp: now.addingTimeInterval(1),
+            isSimulated: true
+        )
+        guard case .accepted(let accepted) = filter.process(jump) else {
+            XCTFail("シミュレート位置の移動は受理されるべき")
+            return
+        }
+        XCTAssertEqual(accepted.latitude, 51.5, accuracy: 1e-9)
+        XCTAssertEqual(accepted.longitude, -0.12, accuracy: 1e-9)
+    }
+
+    func testStaleFixIsAcceptedButFlagged() {        var filter = FixFilter()
         let old = Date().addingTimeInterval(-25 * 60 * 60)
         let fix = makeFix(latitude: 35.0, longitude: 139.0, timestamp: old)
         guard case .accepted(let accepted) = filter.process(fix) else {
