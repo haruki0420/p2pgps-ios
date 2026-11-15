@@ -248,6 +248,13 @@ struct SettingsView: View {
             }
 
             Toggle("Extended Location を通知", isOn: $settings.extendedLocationEnabled)
+
+            Button {
+                settings.senderIntervalMilliseconds = 500
+                settings.extendedLocationEnabled = true
+            } label: {
+                Label("高頻度更新（500 ms + Extended）", systemImage: "bolt")
+            }
         } header: {
             Text("送信（iPhone）")
         } footer: {

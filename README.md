@@ -202,12 +202,6 @@ GitHub Releases に以下を添付しています（`.github/workflows/release-i
 
 用語（DDI・pairing file・BLE など）がわからない場合は [p2pgps Wiki の用語集](https://github.com/haruki0420/p2pgps/wiki/Glossary) を、LocalDevVPN の仕組みや Tailscale などの代替手段は [ネットワーク構成](https://github.com/haruki0420/p2pgps/blob/main/docs/networking.md) を参照してください。
 
-## カーナビ用途
-
-- 遅延・精度・推奨設定は [カーナビ用途での適性](https://github.com/haruki0420/p2pgps/blob/main/docs/car-navigation.md) にまとめています。
-- 目安: **500 ms（2 Hz）+ Extended Location 有効**、両端末を給電、Android の電池最適化を無効化。
-- カジュアルなナビには使えますが、車線案内・安全運転支援・自動運転には使わないでください。
-
 ## 既知の制約
 
 - **実機・シミュレータでの動作検証は限定的**です。CI はコンパイルとリンクのみを保証します。BLE 購読・位置注入・シミュレート位置の移動は Android 実機 + iPad で確認済みですが、UI・Dynamic Type・Dark Mode・Reduce Motion の実機確認は未実施です。
