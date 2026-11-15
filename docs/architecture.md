@@ -53,7 +53,7 @@ P2PGPSApp ──┬─▶ P2PGPSBLE ──┬─▶ P2PGPSCore ──▶ P2PGPSP
 - `URLSchemeLocationFallback`: 埋め込みエンジンが使えない場合に `tlocation://simulate-location?lat=..&lon=..` / `tlocation://clear-location` へ委譲。`canOpenURL` で TLocation の有無を確認し、1 秒に 1 回へ間引く。`UIApplication.open` の完了で成功/失敗を反映し、失敗時は注入状態を解除してエラー表示する（R-6）。委譲ログに座標は出さない（プライバシー）。**バックエンド切替（R-15）**: 注入 ON のまま設定を切り替えた場合は、使用済みのバックエンドを個別に clear してから新しいバックエンドで再開する。注入 OFF / 切断時も「要求したバックエンド」を単位に clear するため、切替後に片方のセッションが残らない。
 - **DDI のサプライチェーン**: `DeveloperDiskImageService` は `doronz88/DeveloperDiskImage` の固定コミット `a1020f81b6429f5ce40408cbe21c690512b613b5` から取得し、3 ファイルすべてを SHA-256 で検証する。不一致は削除してエラー表示。再取得は全ファイルを一時名で取得して検証後に置換する。
 - **pairing file の保護（R-2）**: Application Support/Pairing に 0600 + `FileProtectionType.completeUntilFirstUserAuthentication` + バックアップ除外で保存する。`.complete` ではなく「初回ロック解除後」にしているのは、ロック中にセッションを再構築する際 `rp_pairing_file_read` がファイルを読む必要があるため。属性設定は `prepareURLOnce()` で初回/変更時のみ行う（R-7）。
-- **既知の未解決事項（M6）**: `remote_server` ハンドルの所有権（`location_simulation_new` が所有するか）は上流でも未確定。現在は上流どおり「所有する」前提で `cleanup()` から free しない（二重 free の回避を優先）。リークの有無は実機でセッションを開閉し、Instruments / `lsof` でソケット数を確認する必要がある。
+- **`remote_server` ハンドルの所有権（M6）**: Rust 実装の `location_simulation_new` は `RemoteServerHandle` を借用するだけで所有権を取らないことを確認済み。`LocationSimulationState` がハンドルを保持し、`cleanup()` で location simulation → remote server の順に free する（セッションごとのソケットリークを修正）。
 
 ## 5. 並行性
 

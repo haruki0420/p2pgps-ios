@@ -210,7 +210,7 @@ GitHub Releases に以下を添付しています（`.github/workflows/release-i
 - 実機での UI 確認（Dynamic Type / Dark Mode / Reduce Motion）は未実施です。
 - iOS のバックグラウンドではアドバタイズのローカルネームが落ちることがあり、その間は受信側の名前フィルタで送信元が見えにくくなります（接続済みなら影響なし）。
 - `libidevice_ffi.a` は arm64 iOS 専用です。macOS ネイティブビルドではリンクしません（`swift test` 用にリンカフラグを iOS のみに限定）。
-- `remote_server` ハンドルの所有権（`location_simulation_new` が所有するか）は上流でも未解決です。現在は上流どおり二重 free を避ける実装で、リークの有無は実機でセッションを開閉して確認が必要です。
+- `remote_server` ハンドルは Rust 側が借用するだけ（所有権を取らない）ことを確認済みです。`cleanup()` で location simulation の後に free し、セッションごとのソケットリークを防いでいます。
 - **アプリ再起動後、デバイス側に前回のシミュレーションセッションが残る場合があります**（アプリはハンドルを持たないため `clear()` で消せません）。再起動・再ログインで解消します。
 - **バックグラウンド維持はバッテリーとのトレードオフ**です。注入 ON の間は Receiver 画面を離れても低精度の位置情報セッションを維持します（設定で OFF 可。OFF の場合、画面 OFF・長時間のバックグラウンドで注入が止まり得ます）。
 - RSSI のポーリングは main run loop の `Timer` 依存のため、バックグラウンド中は SignalBars が古い値のままになり得ます（表示のみの制約）。

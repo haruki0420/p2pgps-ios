@@ -106,6 +106,12 @@ struct ReceiverView: View {
         .onChange(of: central.latestFix?.latitude) { _, _ in
             centerIfNeeded()
         }
+        .onChange(of: central.latestFix == nil) { _, isNil in
+            // Re-center on the next sender after a disconnect.
+            if isNil {
+                hasCenteredOnFix = false
+            }
+        }
     }
 
     // MARK: - Map
