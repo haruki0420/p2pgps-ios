@@ -70,7 +70,7 @@ v2 でアプリ層の HMAC / ペアリングコードを追加する余地を残
 
 ## 更新を自動化できますか？
 
-SideStore / AltStore の**ソース**に対応しています。リポジトリを public にするか公開用リポジトリにミラーしたうえで、SideStore の Sources に次を追加すると、新しいリリースが自動で一覧に表示されます。
+SideStore / AltStore の**ソース**に対応しています。このリポジトリは public なので、SideStore の Sources に次を追加すると、新しいリリースが自動で一覧に表示されます。
 
 ```
 https://raw.githubusercontent.com/haruki0420/p2pgps-ios/main/source/apps.json
