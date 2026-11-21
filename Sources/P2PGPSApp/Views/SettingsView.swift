@@ -63,17 +63,21 @@ struct SettingsView: View {
                     Button("完了") { dismiss() }
                 }
             }
-            .fileImporter(
-                isPresented: $isShowingPairingImporter,
-                allowedContentTypes: PairingFileStore.supportedContentTypes
-            ) { result in
-                importPairingFile(result)
-            }
-            .onAppear {
-                // iloader's "Place" writes into <App Documents>/pairingFile.plist;
-                // pick it up when Settings opens (review: automatic placement).
-                pairingPresent = PairingFileStore.importFromDocumentsIfPresent()
-            }
+        }
+        // Keep the importer outside the Form. A fileImporter attached to a
+        // Form can silently fail to present on iPadOS (the button sets the
+        // state, but no document picker appears).
+        .fileImporter(
+            isPresented: $isShowingPairingImporter,
+            allowedContentTypes: PairingFileStore.supportedContentTypes
+        ) { result in
+            importPairingFile(result)
+        }
+        .onAppear {
+            // iloader's "Place" writes into <App Documents>/pairingFile.plist;
+            // pick it up when Settings opens (review: automatic placement).
+            PairingFileStore.importFromDocumentsIfPresent()
+            pairingPresent = PairingFileStore.isPresent
         }
         .tint(P2PColor.pine)
     }
@@ -143,12 +147,14 @@ struct SettingsView: View {
             Button {
                 if PairingFileStore.importFromDocumentsIfPresent() {
                     pairingPresent = true
-                    infoMessage = "アプリのフォルダに置かれた pairing file を読み込みました。"
+                    errorMessage = nil
+                    infoMessage = "Documents に置かれた pairing file を読み込みました。"
                 } else {
-                    infoMessage = "アプリのフォルダに pairing file が見つかりません。"
+                    pairingPresent = PairingFileStore.isPresent
+                    infoMessage = "Documents に pairing file が見つかりません。"
                 }
             } label: {
-                Label("ファイルを選び直す", systemImage: "arrow.clockwise")
+                Label("Documents の pairing file を取り込む", systemImage: "arrow.clockwise")
             }
 
             if pairingPresent {
@@ -225,7 +231,7 @@ struct SettingsView: View {
         } header: {
             Text("位置の書き換え")
         } footer: {
-            Text("この iPad の位置を書き換えるには、①位置情報ファイル、②Apple の開発用イメージ（DDI）、③LocalDevVPN の 3 つが必要です。下のボタンから順に準備してください。")
+            Text("位置の書き換えには ①pairing file、②DDI、③LocalDevVPN が必要です。「pairing file を読み込む」は Files から選びます。「Documents の pairing file を取り込む」は、iloader の Place などで Documents に置かれたファイルを読み込みます。")
         }
     }
 

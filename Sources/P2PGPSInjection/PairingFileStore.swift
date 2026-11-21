@@ -142,11 +142,13 @@ public enum PairingFileStore {
     /// that file up automatically (at launch / when the app becomes active /
     /// when Settings opens) so the user does not have to import it by hand.
     ///
-    /// Returns `true` when a pairing file is present after the migration.
+    /// Returns `true` when a Documents copy was found and imported. Returns
+    /// `false` when there is no Documents copy, even if a canonical pairing
+    /// file already exists.
     @discardableResult
     public static func importFromDocumentsIfPresent(fileManager: FileManager = .default) -> Bool {
         guard documentSourceURL(fileManager: fileManager) != nil else {
-            return isPresent
+            return false
         }
         prepareURL(fileManager: fileManager)
         invalidateCache()
