@@ -76,7 +76,8 @@ struct SettingsView: View {
         .onAppear {
             // iloader's "Place" writes into <App Documents>/pairingFile.plist;
             // pick it up when Settings opens (review: automatic placement).
-            pairingPresent = PairingFileStore.importFromDocumentsIfPresent()
+            PairingFileStore.importFromDocumentsIfPresent()
+            pairingPresent = PairingFileStore.isPresent
         }
         .tint(P2PColor.pine)
     }
@@ -146,9 +147,11 @@ struct SettingsView: View {
             Button {
                 if PairingFileStore.importFromDocumentsIfPresent() {
                     pairingPresent = true
-                    infoMessage = "アプリのフォルダに置かれた pairing file を読み込みました。"
+                    errorMessage = nil
+                    infoMessage = "Documents に置かれた pairing file を読み込みました。"
                 } else {
-                    infoMessage = "アプリのフォルダに pairing file が見つかりません。"
+                    pairingPresent = PairingFileStore.isPresent
+                    infoMessage = "Documents に pairing file が見つかりません。"
                 }
             } label: {
                 Label("Documents の pairing file を取り込む", systemImage: "arrow.clockwise")
@@ -228,7 +231,7 @@ struct SettingsView: View {
         } header: {
             Text("位置の書き換え")
         } footer: {
-            Text("この iPad の位置を書き換えるには、①位置情報ファイル、②Apple の開発用イメージ（DDI）、③LocalDevVPN の 3 つが必要です。下のボタンから順に準備してください。「pairing file を読み込む」は Files から選びます。「Documents の pairing file を取り込む」は、iloader の Place などでアプリのフォルダに置かれた pairingFile.plist を読み込みます。")
+            Text("位置の書き換えには ①pairing file、②DDI、③LocalDevVPN が必要です。「pairing file を読み込む」は Files から選びます。「Documents の pairing file を取り込む」は、iloader の Place などで Documents に置かれたファイルを読み込みます。")
         }
     }
 
