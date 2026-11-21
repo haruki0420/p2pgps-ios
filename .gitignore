@@ -41,3 +41,30 @@ build/
 Thumbs.db
 .vscode/
 .idea/
+
+# --- Secrets / signing (追加分) ----------------------------------------------
+.env.*
+!.env.example
+
+# --- Work / reports / temporary ---------------------------------------------
+*.bak
+*.orig
+*~
+*.tmp
+*.swp
+screenshots/
+reports/
+notes/
+work/
+tmp/
+scratch/
+drafts/
+*.gpx
+*.geojson
+*.csv
+
+# --- Repo-specific -----------------------------------------------------------
+*.log
+TestResults/
+*.xcresult
+*.xcarchive
