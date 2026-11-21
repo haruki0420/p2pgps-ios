@@ -1,6 +1,6 @@
 # プロトコル実装メモ
 
-仕様の正本は `p2pgps-protocol` リポジトリの `spec/protocol-v1.md`（実装開始時点のミラー: `p2pgps/https://github.com/haruki0420/p2pgps-protocol/blob/main/spec/protocol-v1.md`）。ここでは `P2PGPSProtocol` の実装判断だけを記録します。
+仕様の正本は `p2pgps-protocol` リポジトリの [`spec/protocol-v1.md`](https://github.com/haruki0420/p2pgps-protocol/blob/main/spec/protocol-v1.md)。ここでは `P2PGPSProtocol` の実装判断だけを記録します。
 
 ## 1. 定数
 

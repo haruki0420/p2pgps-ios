@@ -18,8 +18,7 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
 
 ## iOS 固有の制約
 
-- 全画面のレンダリング確認は未実施で、
-  CI はコンパイルとリンクのみを保証する。実機確認は README の既知の制約に記載。
+- 全画面のレンダリング確認は未実施で、CI はコンパイルとリンクのみを保証する。確認範囲はハブ Wiki の [Status](https://github.com/haruki0420/p2pgps/wiki/Status) を参照。
 - 位置注入は Apple 非公開 API 相当。TLocation と同一の FFI に固定し、壊れた場合は
   `tlocation://` URL スキームへ委譲するフォールバックを設定で選べる。
 - iPad 側は Developer Mode / LocalDevVPN / pairing file / DDI が前提。
@@ -31,7 +30,7 @@ ios（iPadOS を含む。iPad は Receiver、iPhone は Sender が既定）
 
 ## 画面と実装の対応
 
-| 画面 | 実装ファイル | 共通 DESIGN.md の該当節 |
+| 画面 | 実装ファイル | 共通 [Design](https://github.com/haruki0420/p2pgps/wiki/Design) の該当節 |
 | :--- | :--- | :--- |
 | Home（ロール選択） | `Sources/P2PGPSApp/Views/HomeView.swift` | Layout > Home |
 | Receiver | `Sources/P2PGPSApp/Views/ReceiverView.swift` | Layout > Receiver |

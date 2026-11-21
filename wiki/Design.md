@@ -102,5 +102,5 @@
 ## 5. 検証状況
 
 - コンパイル: **CI（macOS ランナー）で検証済み**（`swift test` / iOS クロスビルド / XcodeGen + xcodebuild リンクのみ）。ローカルに Swift / Xcode / Simulator は無い。
-- レンダリング: **未検証**。Dynamic Type XXL・Dark Mode・Reduce Motion の実画面確認は実機で行う必要があります。既知の制約として README に記載。
+- レンダリング: **未検証**。Dynamic Type XXL・Dark Mode・Reduce Motion の実画面確認は実機で行う必要があります。確認範囲はハブ Wiki の [Status](https://github.com/haruki0420/p2pgps/wiki/Status) を参照。
 - 地図のレンジリングはスクリーン空間の固定半径（88/156/232 pt）で、メートル換算はしていません（v1 の既知の制約）。正確な距離スケールが必要になったら `MapReader` / `MapProxy.convert` で実装してください。

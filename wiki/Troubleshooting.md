@@ -42,6 +42,6 @@
 
 ## 既知の制約
 
-- Bluetooth での位置の受け渡しと、iPad の位置の書き換えは Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
+- 実機での確認範囲（BLE 接続・位置の書き換え・全画面 UI）は [Status](https://github.com/haruki0420/p2pgps/wiki/Status) にまとめています。
 - iPad の位置変更は Apple の非公開機能に依存するため、OS の更新で動かなくなる可能性があります。
 - Bluetooth は 1 対 1 接続です。

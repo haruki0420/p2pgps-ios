@@ -2,6 +2,11 @@
 
 iPhone から現在地を送り、iPad の位置として使えるようにするアプリです。iPad 側は位置を書き換えるために、pairing file・LocalDevVPN・Developer Disk Image（DDI）を使います。
 
+- **これは何**: iPhone を Sender、iPad を Receiver にして、BLE で位置を渡す iOS / iPadOS アプリ。
+- **誰向け**: Mac を持たず、iPhone から iPad の位置を合わせたい技術志向の人。位置依存アプリの QA・デモ担当。
+- **制約**: iOS / iPadOS 17.0 以降。送信だけなら iPhone 単体で動く。受信には iPad の Developer Mode / LocalDevVPN / pairing file / DDI が必要。
+- **状態**: 検証状況はハブ Wiki の [Status](https://github.com/haruki0420/p2pgps/wiki/Status) を参照。
+
 ## 必要なもの
 
 - iPhone / iPad: iOS / iPadOS 17.0 以降

@@ -44,7 +44,4 @@
 
 ## 検証状況
 
-- コンパイル: **CI（macOS ランナー）で検証済み**（`swift test` / iOS クロスビルド /
-  XcodeGen + xcodebuild リンク）。
-- BLE 購読・位置注入は Android 実機 + iPad で確認済みです。
-- 全画面 UI・Dynamic Type・Dark Mode は **未確認**です。
+確認範囲はハブ Wiki の [Status](https://github.com/haruki0420/p2pgps/wiki/Status) を参照してください。

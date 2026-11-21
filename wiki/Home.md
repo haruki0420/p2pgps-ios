@@ -1,6 +1,6 @@
 # P2P GPS for iOS / iPadOS
 
-iPhone の現在地を Bluetooth で iPad に送り、iPad の位置として使えるようにするアプリです。位置情報はクラウドを通らず、端末同士だけでやり取りします。
+iPhone の現在地を Bluetooth で iPad に送り、iPad の位置として使えるようにするアプリです。位置情報はクラウドを通らず、端末同士だけでやり取りします。送信だけなら iPhone 単体で完結し、受信（位置の書き換え）には iPad の追加準備が必要です。
 
 ## 2 つの役割
 
@@ -9,16 +9,26 @@ iPhone の現在地を Bluetooth で iPad に送り、iPad の位置として使
 | 送信する | iPhone | 現在地を iPad に送る |
 | 受信する | iPad | 送られてきた位置を地図に表示し、iPad の位置を書き換える |
 
-## はじめかた
+## はじめて使う
 
-1. [Setup iPad](Setup-iPad) — iPad の準備（Developer Mode / LocalDevVPN / pairing file / DDI）
-2. [困ったとき](Troubleshooting)
-3. [よくある質問](FAQ)
+- [Getting Started](Getting-Started)
+- [Setup iPad](https://github.com/haruki0420/p2pgps/wiki/Setup-iPad) — iPad の準備（Developer Mode / LocalDevVPN / pairing file / DDI）
+- [FAQ](FAQ)
 
-## 開発者向け
+## 開発する
 
 - [Build](Build) — アプリのビルド
 - [Source](Source) — SideStore / AltStore での配布
+- [Architecture](Architecture)
+- [Design](Design)
+- [Protocol](Protocol)
+
+## 困ったとき・状態
+
+- [Troubleshooting](Troubleshooting)
+- [Status](https://github.com/haruki0420/p2pgps/wiki/Status) — 実機・UI の確認範囲
+- [Compatibility](https://github.com/haruki0420/p2pgps/wiki/Compatibility)
+- [License](License)
 
 ## できること
 
@@ -30,5 +40,4 @@ iPhone の現在地を Bluetooth で iPad に送り、iPad の位置として使
 ## 注意
 
 - iPad の位置を書き換えるには、Developer Mode・LocalDevVPN・pairing file・DDI が必要です。
-- Bluetooth での位置の受け渡しと、iPad の位置の書き換えは Android 実機 + iPad で確認済みです。全画面 UI・Dynamic Type・Dark Mode は未確認です。
 - 本アプリは AGPL-3.0 です。詳しくは [License](License) を参照してください。
