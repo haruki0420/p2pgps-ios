@@ -8,7 +8,7 @@ P2P GPS を **SideStore / AltStore のソース**に追加すると、新しい�
 
 - `apps[].versions[]` に IPA の URL・サイズ・SHA-256・リリース日・変更点を並べています。
 - `scripts/generate_source.py` が GitHub Release から自動生成します。
-- `.github/workflows/update-source.yml` が **Release IPA ワークフローの成功後**に `source/apps.json` を更新して `main` にコミットします。
+- `.github/workflows/update-source.yml` が **Release が published になった後**、または **Release IPA の成功後**に `source/apps.json` の PR を作成します。publish-first / draft-first のどちらでも更新されます。branch protection のため、レビューと `review-gate` の後にマージします。
 
 ## SideStore への追加手順
 
@@ -51,10 +51,12 @@ sidestore://source?url=https%3A%2F%2Fraw.githubusercontent.com%2Fharuki0420%2Fp2
 
 ## 更新の自動化の範囲
 
-- **ソースの更新**: 自動（Release IPA 成功 → `update-source.yml` → `apps.json` 更新）
+- **ソースの更新**: 自動で PR 作成（Release published / Release IPA 成功 → `update-source.yml` → `apps.json` の PR）。マージはレビュー後。
 - **SideStore 側の検知**: 自動（ソースを再取得して新バージョンを表示）
 - **アプリのインストール**: ユーザー操作が必要（SideStore で「更新」をタップ）。iOS のサイドロードではバックグラウンドでの無音自動インストールはできません。
 - **7 日制限の更新**: SideStore の「7 DAYS」で更新（ソースとは別）
+
+> GitHub Actions が PR を作成できるよう、リポジトリ設定の「Allow GitHub Actions to create and approve pull requests」を有効にしています。workflow は PR を作るだけで、承認はしません。pre-release と、まだ IPA が添付されていない release はスキップします。
 
 ## 手動でソースを更新する
 
