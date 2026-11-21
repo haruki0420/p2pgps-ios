@@ -1,9 +1,17 @@
 name: Update SideStore source
 
 # Regenerates `source/apps.json` (AltStore / SideStore source format) whenever a
-# release is published. Branch protection blocks direct pushes to `main`, so
-# this workflow opens a pull request instead. A human or review agent must post
-# `review-gate` and merge it.
+# release is published or the "Release IPA" build succeeds.
+#
+# Both triggers are needed:
+#   * draft-first: Release IPA finishes while the release is still a draft.
+#     That run skips, and `release: published` runs after the IPA is attached.
+#   * publish-first: the release is published before the IPA exists. That run
+#     skips, and `workflow_run: Release IPA` runs after the IPA is attached.
+#
+# Branch protection blocks direct pushes to `main`, so this workflow opens a
+# pull request instead. A human or review agent must post `review-gate` and
+# merge it.
 #
 # NOTE: SideStore can only read the source over a *public* URL. This repository
 # is public, so `source/apps.json` and the IPA assets are served directly from
@@ -12,6 +20,9 @@ name: Update SideStore source
 on:
   release:
     types: [published]
+  workflow_run:
+    workflows: ["Release IPA"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
@@ -43,11 +54,18 @@ jobs:
         id: tag
         env:
           GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          TAG="${{ inputs.tag }}"
+          TAG="$INPUT_TAG"
           if [ -z "$TAG" ] && [ "${{ github.event_name }}" = "release" ]; then
-            TAG="${{ github.event.release.tag_name }}"
+            TAG="$RELEASE_TAG"
+          fi
+          if [ -z "$TAG" ] && [ "${{ github.event_name }}" = "workflow_run" ]; then
+            git fetch --tags --force
+            TAG=$(git tag --points-at "$WORKFLOW_RUN_SHA" | sort -V | tail -1)
           fi
           if [ -z "$TAG" ]; then
             TAG=$(gh release list --repo "${{ github.repository }}" --limit 20 \
@@ -62,37 +80,51 @@ jobs:
           echo "Resolved tag: $TAG"
 
       - name: Check release and IPA asset
+        id: check
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           set -euo pipefail
-          TAG="${{ steps.tag.outputs.tag }}"
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+
           if [ "$(gh release view "$TAG" --repo "${{ github.repository }}" --json isDraft --jq .isDraft)" = "true" ]; then
-            echo "Release $TAG is still a draft; publish it before updating the source." >&2
-            exit 1
+            echo "Release $TAG is still a draft; waiting for publish."
+            exit 0
           fi
-          if ! gh release view "$TAG" --repo "${{ github.repository }}" --json assets \
-            --jq '.assets[] | select(.name | endswith(".ipa")) | .name' | grep -q .; then
-            echo "No IPA asset for $TAG; skipping source update."
+          if [ "$(gh release view "$TAG" --repo "${{ github.repository }}" --json isPrerelease --jq .isPrerelease)" = "true" ]; then
+            echo "Release $TAG is a pre-release; skipping."
             exit 0
           fi
 
+          IPA_COUNT=$(gh release view "$TAG" --repo "${{ github.repository }}" --json assets \
+            --jq '[.assets[] | select(.name | endswith(".ipa"))] | length')
+          if [ "$IPA_COUNT" -eq 0 ]; then
+            echo "No IPA asset for $TAG; waiting for the Release IPA workflow."
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
       - name: Regenerate source JSON
+        if: steps.check.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           set -euo pipefail
           python3 scripts/generate_source.py \
-            --tag "${{ steps.tag.outputs.tag }}" \
+            --tag "$TAG" \
             --repo "${{ github.repository }}" \
             --output source/apps.json
 
       - name: Create or update source PR
+        if: steps.check.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           set -euo pipefail
-          TAG="${{ steps.tag.outputs.tag }}"
           BRANCH="chore/source-${TAG}"
 
           if git diff --quiet -- source/apps.json; then
