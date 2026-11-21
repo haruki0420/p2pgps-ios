@@ -22,6 +22,15 @@
       "screenshots": [],
       "versions": [
         {
+          "version": "1.0.14",
+          "date": "2026-11-21T09:09:38Z",
+          "localizedDescription": "iPadOS 27 で pairing file の読み込みが無反応になる問題を修正しました。",
+          "downloadURL": "https://github.com/haruki0420/p2pgps-ios/releases/download/v1.0.14/p2pgps-ios-v1.0.14-unsigned.ipa",
+          "size": 3362764,
+          "minOSVersion": "17.0",
+          "sha256": "43e47a4a20a2f415f2acd864611d9810b42feba8365c83ccb27fa7b750088efa"
+        },
+        {
           "version": "1.0.12",
           "date": "2026-11-15T10:05:05Z",
           "localizedDescription": "送信設定に「高頻度更新（500 ms + Extended）」プリセットを追加しました。",
@@ -117,6 +126,14 @@
   ],
   "news": [
     {
+      "title": "v1.0.14: p2pgps-ios v1.0.14",
+      "identifier": "v1.0.14",
+      "caption": "iPadOS 27 で pairing file の読み込みが無反応になる問題を修正しました。",
+      "date": "2026-11-21T09:09:38Z",
+      "tintColor": "#2F6B4F",
+      "url": "https://github.com/haruki0420/p2pgps-ios/releases/tag/v1.0.14"
+    },
+    {
       "title": "v1.0.13: p2pgps-ios v1.0.13",
       "identifier": "v1.0.13",
       "caption": "画面の言葉と案内を分かりやすくしました。",
@@ -187,14 +204,6 @@
       "date": "2026-11-15T06:43:23Z",
       "tintColor": "#2F6B4F",
       "url": "https://github.com/haruki0420/p2pgps-ios/releases/tag/v1.0.5"
-    },
-    {
-      "title": "v1.0.4: p2pgps-ios v1.0.4",
-      "identifier": "v1.0.4",
-      "caption": "iPadOS 26 でトンネル接続が `ConnectionReset` になる問題を修正したリリースです。",
-      "date": "2026-11-15T06:08:06Z",
-      "tintColor": "#2F6B4F",
-      "url": "https://github.com/haruki0420/p2pgps-ios/releases/tag/v1.0.4"
     }
   ]
 }
